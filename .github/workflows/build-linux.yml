@@ -26,9 +26,6 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Check installer scripts
-        run: bash -n install-omarchy
-
       - name: Build and run interaction smoke
         env:
           QT_QPA_PLATFORM: offscreen

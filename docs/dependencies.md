@@ -37,9 +37,9 @@ is preserved on both paths. No quality or compression setting is exposed.
 
 ## Runtime: external processes, not libraries
 
-Omasnap shells out to a small number of existing Omarchy/Arch tools instead
+Omasnap shells out to a small number of existing command-line tools instead
 of linking their libraries in-process. This is intentional: a `QProcess`
-call to a well-maintained CLI tool that's already on every Omarchy install
+call to a well-maintained CLI tool that's already installed
 is a dependency Omasnap doesn't have to build, version, or debug — the
 alternative (vendoring an OCR engine, a clipboard protocol implementation,
 or a compositor IPC client) would be strictly more code and more risk for
@@ -61,12 +61,12 @@ detached. None run inline on the UI thread.
 
 ## Not a dependency: external Qt platform themes
 
-Omarchy exports `QT_QPA_PLATFORMTHEME=gtk3` for the whole session so Qt apps
+Desktop sessions commonly export `QT_QPA_PLATFORMTHEME=gtk3` so Qt apps
 match GTK apps. Omasnap overrides it to `generic` (Qt's built-in theme) for
 its own process in `main()` before `QApplication` is constructed: honouring
 the session value loads the `qgtk3` plugin,
 which initialises GTK3, GLib/GIO and dconf inside the process — measured at
-81–112 ms of `QApplication` construction and ~20–24 MiB of RSS on an Omarchy
+81–112 ms of `QApplication` construction and ~20–24 MiB of RSS on a
 laptop — for hand-painted chrome and Qt's built-in file chooser. The only
 relevant values the external theme supplied were its general and fixed fonts;
 their chrome and application-default replacements
@@ -87,7 +87,7 @@ palette, alter annotation/export colors, or change the pinned fonts.
 ## Save As dialog
 
 Save As uses the existing Qt Widgets file chooser asynchronously, with pinned
-chrome fonts and the active Omarchy theme, including live theme changes.
+chrome fonts and the active chrome theme, including live theme changes.
 The overlay alone receives its layer-shell
 role through `LayerShellQt::Window::get`; the inherited global shell override
 is cleared so the chooser and overwrite prompts use ordinary xdg-shell windows.
@@ -111,7 +111,7 @@ Ask, in order:
    concurrency, text layout, SVG, image I/O). Check before reaching
    further.
 2. **Is this an OS-integration concern better solved by shelling out to an
-   existing Omarchy tool**, the way clipboard, OCR, and notifications are?
+   existing CLI tool**, the way clipboard, OCR, and notifications are?
    A new external-process dependency is far cheaper than a new linked
    library: it doesn't grow the binary, doesn't add a build-time
    dependency, and fails gracefully (a missing/failed process is just an
@@ -132,7 +132,7 @@ adapted to the existing `QPainterPath` renderer. Its ISC notice is in
 SVG renderer, or theme lookup is needed.
 
 Single, statically-linked-where-practical binary, installed to
-`~/.local/bin/omasnap` (see the repository's `install-omarchy`). Every
+`~/.local/bin/omasnap` with `xmake install`. Every
 dependency added here is weight every user carries on every install and
 every update. If a feature can be built with what's already linked, that's
 the implementation to ship.

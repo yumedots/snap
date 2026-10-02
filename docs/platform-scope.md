@@ -1,6 +1,6 @@
 # Platform scope: Wayland + Hyprland, on purpose
 
-Omasnap targets one platform: **Wayland, on Hyprland, on Omarchy.** This is
+Omasnap targets one platform: **Wayland, on Hyprland.** This is
 not a starting point we intend to broaden into a general Linux screenshot
 tool. It is a deliberate choice that keeps the code small and lets it use
 real platform facilities instead of lowest-common-denominator
@@ -29,9 +29,6 @@ abstractions.
   apply it to Omasnap: the scrolling overlay needs to capture the live desktop
   through its transparent region. Ordinary captures happen before the overlay
   maps and do not need an exclusion rule.
-- Notifications prefer `omarchy-notification-send` and fall back to
-  `OMARCHY_OCR_LANGS`/`OMASNAP_OCR_LANGS` conventions that assume an Omarchy
-  install (see `src/capture.cpp`, README's OCR section).
 
 ## What's actually generic, and why it can work elsewhere by accident
 
