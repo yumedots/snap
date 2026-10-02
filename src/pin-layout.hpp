@@ -26,6 +26,18 @@
 [[nodiscard]] QRect pinVisibleRect(const QRect &rect, const QRect &screen,
                                     int margin);
 
+/// Home corner for the preview stack plus a pixel shift (x right, y down).
+struct PreviewPlacement {
+  bool fromLeft = false;
+  bool fromTop = false;
+  int x = 0;
+  int y = 0;
+};
+
+/// Corner words + x/y from OMASNAP_PREVIEW_* env, else omasnap.conf
+/// `[preview]`, else right bottom.
+[[nodiscard]] PreviewPlacement pinPlacement();
+
 /// Where a frame of `frame` size lands so it covers none of `blockers`:
 /// snug in the bottom-right corner, or one gap above whatever occupies it,
 /// climbing the column and starting a new column to the left when this one

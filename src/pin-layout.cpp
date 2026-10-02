@@ -1,9 +1,11 @@
 /** @fileoverview Implements pinned-window stacking and dispatch helpers. */
 #include "pin-layout.hpp"
+#include "output-config.hpp"
 
 #include <QJsonArray>
 #include <QImage>
 #include <QRect>
+#include <QSettings>
 #include <QTransform>
 #include <Qt>
 #include <QtNumeric>
@@ -55,29 +57,73 @@ QRect pinVisibleRect(const QRect &rect, const QRect &screen, int margin) {
                  std::clamp(rect.y(), top, bottom)), rect.size()};
 }
 
+PreviewPlacement pinPlacement() {
+  const auto parse = [](const QString &text) {
+    PreviewPlacement parsed;
+    for (const QString &token :
+         text.simplified().split(QLatin1Char(' '), Qt::SkipEmptyParts)) {
+      const QString word = token.toLower();
+      if (word == QLatin1String("left"))
+        parsed.fromLeft = true;
+      else if (word == QLatin1String("right"))
+        parsed.fromLeft = false;
+      else if (word == QLatin1String("top"))
+        parsed.fromTop = true;
+      else if (word == QLatin1String("bottom"))
+        parsed.fromTop = false;
+    }
+    return parsed;
+  };
+  const QString env = qEnvironmentVariable("OMASNAP_PREVIEW_POSITION");
+  PreviewPlacement place;
+  if (!env.isEmpty())
+    place = parse(env);
+  const QSettings settings(defaultConfigPath(), QSettings::IniFormat);
+  const QString position =
+      settings.value(QStringLiteral("preview/position")).toString().trimmed();
+  if (env.isEmpty() && !position.isEmpty())
+    place = parse(position);
+  const QString envX = qEnvironmentVariable("OMASNAP_PREVIEW_X");
+  const QString envY = qEnvironmentVariable("OMASNAP_PREVIEW_Y");
+  place.x = envX.isEmpty() ? settings.value(QStringLiteral("preview/x"), 0).toInt()
+                            : envX.toInt();
+  place.y = envY.isEmpty() ? settings.value(QStringLiteral("preview/y"), 0).toInt()
+                            : envY.toInt();
+  return place;
+}
+
 std::optional<QPoint> pinPackedPosition(const QVector<QRect> &blockers,
                          const QSize &screenSize, const QSize &frame, int gap,
                          int margin) {
-  int x = screenSize.width() - margin - frame.width();
   if (frame.isEmpty() || gap < 0 || margin < 0)
     return std::nullopt;
-  while (x >= margin) {
-    int y = screenSize.height() - margin - frame.height();
-    while (y >= margin) {
+  const PreviewPlacement place = pinPlacement();
+  const int maxX = screenSize.width() - margin - frame.width();
+  const int maxY = screenSize.height() - margin - frame.height();
+  if (maxX < margin || maxY < margin)
+    return std::nullopt;
+  const int xStep = (place.fromLeft ? 1 : -1) * (frame.width() + gap);
+  int x = std::clamp((place.fromLeft ? margin : maxX) + place.x, margin, maxX);
+  while (place.fromLeft ? x <= maxX : x >= margin) {
+    int y = std::clamp((place.fromTop ? margin : maxY) + place.y, margin, maxY);
+    while (place.fromTop ? y <= maxY : y >= margin) {
       const QRect candidate(x, y, frame.width(), frame.height());
-      std::optional<int> lowestTop;
+      std::optional<int> edge;
       for (const QRect &blocker : blockers) {
-        if (candidate.intersects(blocker))
-          lowestTop = lowestTop ? std::max(*lowestTop, blocker.top())
-                                : blocker.top();
+        if (!candidate.intersects(blocker))
+          continue;
+        const int limit = place.fromTop ? blocker.bottom() : blocker.top();
+        edge = edge ? (place.fromTop ? std::min(*edge, limit)
+                                     : std::max(*edge, limit))
+                    : limit;
       }
-      if (!lowestTop)
+      if (!edge)
         return QPoint(x, y);
       // Climb to one gap above the lowest pin in the way, then look again:
       // the spot up there may graze another one.
-      y = *lowestTop - gap - frame.height();
+      y = place.fromTop ? *edge + gap + 1 : *edge - gap - frame.height();
     }
-    x -= frame.width() + gap;
+    x += xStep;
   }
   return std::nullopt;
 }
@@ -157,16 +203,21 @@ PinInsertionPlan pinInsertionPlan(QVector<QPair<QString, QRect>> column,
                                   const QSize &screenSize, int gap,
                                   int margin) {
   PinInsertionPlan plan;
+  const PreviewPlacement place = pinPlacement();
   std::sort(column.begin(), column.end(),
-            [screenSize, gap, margin](const auto &a, const auto &b) {
-              const auto columnIndex = [screenSize, gap, margin](const QRect &rect) {
-                return qRound(qreal(screenSize.width() - margin - rect.right() - 1) /
-                                (rect.width() + gap));
+            [screenSize, gap, margin, place](const auto &a, const auto &b) {
+              const auto columnIndex = [screenSize, gap, margin, place](const QRect &rect) {
+                const int stride = rect.width() + gap;
+                return place.fromLeft
+                    ? qRound(qreal(rect.left() - margin - place.x) / stride)
+                    : qRound(qreal(screenSize.width() - margin + place.x -
+                                   rect.right() - 1) / stride);
               };
               const int aColumn = columnIndex(a.second), bColumn = columnIndex(b.second);
               if (aColumn != bColumn)
                 return aColumn < bColumn;
-              return a.second.y() > b.second.y();
+              return place.fromTop ? a.second.top() < b.second.top()
+                                   : a.second.bottom() > b.second.bottom();
             });
   // The dragged pin's place in the order comes from its center against the
   // column as it would pack, not against the possibly already-spread live
@@ -206,22 +257,30 @@ PinInsertionPlan pinInsertionPlan(QVector<QPair<QString, QRect>> column,
     return plan;
   // Choose the column with the largest horizontal overlap, then order
   // vertically within it. Earlier columns remain ahead of the insertion.
-  int columnRight = screenSize.width() - margin - 1;
+  int columnAnchor = place.fromLeft
+      ? margin + place.x
+      : screenSize.width() - margin + place.x - 1;
   int overlap = 0;
   for (const QRect &seat : stack) {
     const int width = std::max(0, std::min(seat.right(), dragged.right()) -
                                      std::max(seat.left(), dragged.left()) + 1);
     if (width > overlap) {
       overlap = width;
-      columnRight = seat.right();
+      columnAnchor = place.fromLeft ? seat.left() : seat.right();
     }
   }
   int index = 0;
-  for (const QRect &seat : packed)
-    if (seat.right() > columnRight + 6 ||
-        (std::abs(seat.right() - columnRight) <= 6 &&
-         seat.center().y() > dragged.center().y()))
+  for (const QRect &seat : packed) {
+    const int horizontal =
+        place.fromLeft ? columnAnchor - seat.left() : seat.right() - columnAnchor;
+    const bool earlierColumn = horizontal > 6;
+    const bool sameColumn = std::abs(horizontal) <= 6;
+    const bool earlierRow = place.fromTop
+        ? seat.center().y() < dragged.center().y()
+        : seat.center().y() > dragged.center().y();
+    if (earlierColumn || (sameColumn && earlierRow))
       ++index;
+  }
   plan.index = index;
 
   // Pack again with a dragged-sized hole at the insertion point.
@@ -256,9 +315,15 @@ PinInsertionPlan pinInsertionPlan(QVector<QPair<QString, QRect>> column,
 bool pinInColumn(const QRect &rect, const QSize &screenSize, int margin, int gap) {
   constexpr int tolerance = 6;
   const int stride = rect.width() + gap;
-  if (stride <= 0 || rect.left() < margin - tolerance)
+  const PreviewPlacement place = pinPlacement();
+  const bool withinFarMargin = place.fromLeft
+      ? rect.right() <= screenSize.width() - margin - 1 + tolerance
+      : rect.left() >= margin - tolerance;
+  if (stride <= 0 || !withinFarMargin)
     return false;
-  const int offset = screenSize.width() - margin - rect.right() - 1;
+  const int offset = place.fromLeft
+      ? rect.left() - margin - place.x
+      : screenSize.width() - margin + place.x - rect.right() - 1;
   const int column = std::max(0, qRound(qreal(offset) / stride));
   return std::abs(offset - column * stride) <= tolerance;
 }

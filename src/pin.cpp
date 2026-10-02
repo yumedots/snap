@@ -402,10 +402,14 @@ public:
           pinInColumn(local, screen.size(), qRound(kCornerMargin), kPinGap))
         result.push_back({pin.title, local});
     }
-    std::sort(result.begin(), result.end(), [](const auto &a, const auto &b) {
-      if (a.second.right() != b.second.right())
-        return a.second.right() > b.second.right();
-      return a.second.bottom() > b.second.bottom();
+    const PreviewPlacement place = pinPlacement();
+    std::sort(result.begin(), result.end(), [place](const auto &a, const auto &b) {
+      if (place.fromLeft ? a.second.left() != b.second.left()
+                         : a.second.right() != b.second.right())
+        return place.fromLeft ? a.second.left() < b.second.left()
+                              : a.second.right() > b.second.right();
+      return place.fromTop ? a.second.top() < b.second.top()
+                           : a.second.bottom() > b.second.bottom();
     });
     return result;
   }

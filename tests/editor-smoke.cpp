@@ -12213,6 +12213,9 @@ int main(int argc, char **argv) {
   if (!smokeShelf.isValid())
     return 18;
   qputenv("OMASNAP_RECENT_DIR", smokeShelf.path().toUtf8());
+  qputenv("OMASNAP_PREVIEW_POSITION", "right bottom");
+  qputenv("OMASNAP_PREVIEW_X", "0");
+  qputenv("OMASNAP_PREVIEW_Y", "0");
 
   // Live output capture against a real compositor (the smoke's own Wayland
   // connection; Qt's platform does not matter): open a session on the named

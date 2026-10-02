@@ -343,6 +343,25 @@ bool runPinLayoutSmoke(QString &error) {
     return false;
   }
 
+  qputenv("OMASNAP_PREVIEW_POSITION", "left bottom");
+  const auto leftSlot = pinPackedPosition({}, screen, pin, 10, 14);
+  const bool leftColumn = pinInColumn(QRect(14, 26, 100, 80), screen, 14, 10);
+  const QVector<QPair<QString, QRect>> leftStack{
+      {QStringLiteral("low"), QRect(14, 206, 100, 80)},
+      {QStringLiteral("high"), QRect(14, 116, 100, 80)}};
+  const PinInsertionPlan leftBetween = pinInsertionPlan(
+      leftStack, {}, QRect(14, 140, 100, 80), screen, 10, 14);
+  qputenv("OMASNAP_PREVIEW_POSITION", "right top");
+  const auto topSlot = pinPackedPosition({}, screen, pin, 10, 14);
+  qputenv("OMASNAP_PREVIEW_POSITION", "right bottom");
+  if (!leftSlot || *leftSlot != QPoint(14, 206) || !leftColumn ||
+      leftBetween.index != 1 ||
+      leftBetween.spot != QRect(14, 116, 100, 80) || !topSlot ||
+      *topSlot != QPoint(286, 14)) {
+    error = QStringLiteral("Packing ignored the configured corner or shift");
+    return false;
+  }
+
   // Column membership is hugging the right edge; dragging a pin away from
   // it takes the pin out of the column, whatever its height.
   if (!pinInColumn(QRect(286, 26, 100, 80), screen, 14, 10) ||
