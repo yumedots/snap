@@ -64,7 +64,6 @@ enum class QuickOutputMode { None, Copy, Save, Both, CopyAndPreview };
 enum class SpotlightShape { Ellipse, Rectangle, RoundedRectangle };
 enum class RedactionStyle { Solid, Pixelate };
 enum class TextBackground { Plain, Pill, Outline };
-enum class TextFont { Neucha, JetBrainsMono, InterDisplay };
 enum class ArrowStyle { Standard, Pointy, Curved, Double };
 
 struct Annotation {
@@ -96,8 +95,6 @@ struct Annotation {
   SpotlightShape spotlightShape = SpotlightShape::Ellipse;
   quint32 redactionSeed = 0;
   TextBackground textBackground = TextBackground::Pill;
-  /// Typeface is a layer property so reopened and duplicated labels keep it.
-  TextFont textFont = TextFont::Neucha;
   ArrowStyle arrowStyle = ArrowStyle::Standard;
   quint64 id = 0;
   /** Explicit quadratic Bezier control for Curved/Double arrows. Empty uses
@@ -161,12 +158,8 @@ enum class AnnotationLayer { Redaction, Default };
                                              : AnnotationLayer::Default;
 }
 
-[[nodiscard]] bool loadCaptureFonts();
-/** User-facing name for a bundled annotation typeface. */
-[[nodiscard]] QString annotationTextFontName(TextFont textFont);
-/** Bundled annotation font at Omasnap's logical text size. */
-[[nodiscard]] QFont annotationTextFont(qreal size,
-                                       TextFont textFont = TextFont::Neucha);
+/** Annotation text at Omasnap's logical size, in the application font. */
+[[nodiscard]] QFont annotationTextFont(qreal size);
 /**
  * Discovers the focused monitor (name, geometry, scale). Fast: only one
  * `hyprctl monitors` call. Safe to call on the main thread to position the

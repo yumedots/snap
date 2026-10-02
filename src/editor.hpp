@@ -713,7 +713,6 @@ private:
   void queuePointerRepaint(const QRegion &damage);
   void toggleShapeFill();
   void toggleTextBackground();
-  void cycleTextFont();
   void cycleArrowStyle();
   void nudgeSelectedAnnotation(const QPointF &delta);
   void endNudgeRun();
@@ -871,9 +870,6 @@ private:
   QTimer adjustSettleTimer_;
   int textSizeIndex_ = 1;
   TextBackground textBackground_ = TextBackground::Pill;
-  /// Typeface for the next label; Shift+T cycles it without changing Neucha's
-  /// role as the session default.
-  TextFont textFont_ = TextFont::Neucha;
   qreal spotlightMagnification_ = 2.0;
   /// Ring drawn around a spotlight's opening; 0 draws none.
   qreal spotlightBorder_ = 4.0;
@@ -950,9 +946,6 @@ private:
   QVector<Annotation> originalSelectedAnnotations_;
   QVector<int> selectedAnnotations_;
   qreal textSize_ = 4.0;
-  /// Typeface held by the active inline draft (existing layer or next-label
-  /// default), kept alongside textSize_ so its baseline does not jump.
-  TextFont textEditFont_ = TextFont::Neucha;
   /// The inline editor's pill and caret are painted by the editor itself
   /// (the multiline editor stays transparent with its own caret hidden) so the
   /// caret follows the selected face's glyph box instead of its whole line box.

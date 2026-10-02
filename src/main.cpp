@@ -274,9 +274,6 @@ int main(int argc, char **argv) {
       !parser.isSet(QStringLiteral("editor")))
     quickOutputMode = QuickOutputMode::CopyAndPreview;
   startupTimingMark("options resolved");
-  if (!loadCaptureFonts())
-    return 1;
-  startupTimingMark("capture font loaded");
   application.setQuitOnLastWindowClosed(true);
 
   const QString runtime = secureRuntimeDirectory();

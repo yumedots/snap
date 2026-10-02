@@ -570,18 +570,6 @@ QString textBackgroundName(TextBackground background) {
   return QStringLiteral("Pill");
 }
 
-TextFont nextTextFont(TextFont textFont) {
-  switch (textFont) {
-  case TextFont::Neucha:
-    return TextFont::JetBrainsMono;
-  case TextFont::JetBrainsMono:
-    return TextFont::InterDisplay;
-  case TextFont::InterDisplay:
-    return TextFont::Neucha;
-  }
-  return TextFont::Neucha;
-}
-
 QString redactionStyleName(RedactionStyle style) {
   return style == RedactionStyle::Solid ? QStringLiteral("Solid")
                                         : QStringLiteral("Pixelate");
@@ -1512,9 +1500,7 @@ QString CaptureEditor::toolStatus() const {
     return QStringLiteral("Redact · %1 · D toggles style")
         .arg(redactionStyleName(redactionStyle_).toLower());
   case Tool::Text:
-    return QStringLiteral("Text · %1 · size %2 · Shift+T cycles font · click "
-                          "to type")
-        .arg(annotationTextFontName(textFont_))
+    return QStringLiteral("Text · size %1 · click to type")
         .arg(QString::fromLatin1(
             kTextSizeNames.at(static_cast<std::size_t>(textSizeIndex_))));
   case Tool::Marker:
@@ -1928,23 +1914,6 @@ void CaptureEditor::toggleTextBackground() {
   selectedAnnotation_ = -1;
   setStatus(QStringLiteral("Text: %1 · T again cycles")
                 .arg(textBackgroundName(textBackground_).toLower()));
-}
-
-void CaptureEditor::cycleTextFont() {
-  if (selectedAnnotation_ >= 0 && selectedAnnotation_ < annotations_.size() &&
-      annotations_.at(selectedAnnotation_).kind == Annotation::Kind::Text) {
-    Annotation &text = annotations_[selectedAnnotation_];
-    text.textFont = nextTextFont(text.textFont);
-    setStatus(QStringLiteral("Selected text: %1 · Shift+T cycles font")
-                  .arg(annotationTextFontName(text.textFont)));
-    commitPatch({selectedAnnotation_});
-    return;
-  }
-  textFont_ = nextTextFont(textFont_);
-  selectedAnnotation_ = -1;
-  tool_ = Tool::Text;
-  setStatus(QStringLiteral("Text: %1 · Shift+T cycles font")
-                .arg(annotationTextFontName(textFont_)));
 }
 
 void CaptureEditor::cycleArrowStyle() {
@@ -2730,9 +2699,7 @@ CaptureEditor::toolbarButtons(QVector<qreal> *groupDividers,
   add(36, QStringLiteral("tool-cut"), {},
       QStringLiteral("Cut out a band · X · drag across"));
   add(36, QStringLiteral("tool-text"), {},
-      QStringLiteral("%1 text · T · %2 · %3 · T again cycles style · "
-                     "Shift+T cycles font · Wheel")
-          .arg(annotationTextFontName(textFont_))
+      QStringLiteral("Text · T · %1 · %2 · T again cycles style · Wheel")
           .arg(QString::fromLatin1(
               kTextSizeNames.at(static_cast<std::size_t>(textSizeIndex_))))
           .arg(textBackgroundName(textBackground_)));
@@ -3734,7 +3701,7 @@ void CaptureEditor::layoutTextEditor() {
   const QString text = textEditor_->toPlainText();
   const QSignalBlocker blocker(textEditor_);
   const qreal scale = editScale();
-  QFont displayFont = annotationTextFont(textSize_, textEditFont_);
+  QFont displayFont = annotationTextFont(textSize_);
   displayFont.setPointSizeF(displayFont.pixelSize() * scale * 72.0 / logicalDpiY());
   textEditor_->setFont(displayFont);
   const QFontMetrics metrics(displayFont);
@@ -3764,7 +3731,6 @@ void CaptureEditor::layoutTextEditor() {
   logical.kind = Annotation::Kind::Text;
   logical.start = textPoint_;
   logical.size = textSize_;
-  logical.textFont = textEditFont_;
   logical.textWidth = textEditWrapWidth_;
   textEditor_->setLogicalWrap(logical, canvasRect_.right());
   // QPlainTextEdit needs a little more than QFontMetrics::height(): its
@@ -3791,7 +3757,6 @@ Annotation CaptureEditor::draftTextAnnotation() const {
   Annotation draft;
   draft.kind = Annotation::Kind::Text;
   draft.size = textSize_;
-  draft.textFont = textEditFont_;
   draft.text = textEditor_->toPlainText();
   draft.color = textColor_;
   draft.textBackground =
@@ -3799,7 +3764,7 @@ Annotation CaptureEditor::draftTextAnnotation() const {
       : editingAnnotation_ >= 0 && editingAnnotation_ < annotations_.size()
           ? annotations_.at(editingAnnotation_).textBackground
           : textBackground_;
-  const QFontMetricsF metrics(annotationTextFont(textSize_, textEditFont_));
+  const QFontMetricsF metrics(annotationTextFont(textSize_));
   draft.start = textPoint_ + QPointF(0, metrics.ascent());
   // The width the draft wraps to now: its own, or the room left before the
   // settled canvas edge, which is the shape acceptText() freezes on commit.
@@ -3817,10 +3782,9 @@ void CaptureEditor::beginText(const QPointF &point, int annotationIndex,
     const Annotation &annotation = annotations_.at(annotationIndex);
     textColor_ = annotation.color;
     textSize_ = annotation.size;
-    textEditFont_ = annotation.textFont;
     textPoint_ =
         annotation.start -
-        QPointF(0, QFontMetricsF(annotationTextFont(textSize_, textEditFont_))
+        QPointF(0, QFontMetricsF(annotationTextFont(textSize_))
                        .ascent());
     existingText = annotation.text;
     // An existing label has room for the lines it already has: Enter on its
@@ -3831,7 +3795,6 @@ void CaptureEditor::beginText(const QPointF &point, int annotationIndex,
     textPoint_ = point;
     textColor_ = annotationColor();
     textSize_ = kTextSizes.at(static_cast<std::size_t>(textSizeIndex_));
-    textEditFont_ = textFont_;
   }
 
   textLineCapacity_ = std::max(1, lineCapacity);
@@ -3875,12 +3838,11 @@ void CaptureEditor::acceptText(bool keepSelected) {
     annotation.kind = Annotation::Kind::Text;
     annotation.start =
         textPoint_ +
-        QPointF(0, QFontMetricsF(annotationTextFont(textSize_, textEditFont_))
+        QPointF(0, QFontMetricsF(annotationTextFont(textSize_))
                        .ascent());
     annotation.text = text;
     annotation.color = textColor_;
     annotation.size = textSize_;
-    annotation.textFont = textEditFont_;
     // Text that wrapped at the current canvas edge freezes that shape on
     // commit, as
     // tight as its widest line, so moving the layer later never reflows the
@@ -3891,8 +3853,7 @@ void CaptureEditor::acceptText(bool keepSelected) {
           annotationTextLines(annotation, canvasRect_.right());
       const qsizetype hardLineCount = annotation.text.count('\n') + 1;
       if (wrapped.size() > hardLineCount) {
-        const QFontMetricsF metrics(
-            annotationTextFont(annotation.size, annotation.textFont));
+        const QFontMetricsF metrics(annotationTextFont(annotation.size));
         qreal widest = 0.0;
         for (const QString &line : wrapped) {
           QString visible = line;
@@ -3900,7 +3861,9 @@ void CaptureEditor::acceptText(bool keepSelected) {
             visible.chop(1);
           widest = std::max(widest, metrics.horizontalAdvance(visible));
         }
-        annotation.textWidth = widest + 2.0;
+        annotation.textWidth =
+            std::min(widest + 2.0,
+                     annotationTextWrapWidth(annotation, canvasRect_.right()));
       }
     }
     annotation.textBackground =
@@ -4743,9 +4706,6 @@ void CaptureEditor::keyPressEvent(QKeyEvent *event) {
   } else if (event->key() == Qt::Key_X) {
     tool_ = Tool::Cut;
     setStatus(QStringLiteral("Cut: drag across a band to remove it"));
-  } else if (event->key() == Qt::Key_T &&
-             event->modifiers() == Qt::ShiftModifier) {
-    cycleTextFont();
   } else if (event->key() == Qt::Key_T) {
     const bool textSelected =
         selectedAnnotation_ >= 0 && selectedAnnotation_ < annotations_.size() &&
@@ -5185,7 +5145,7 @@ QRegion CaptureEditor::pointerMotionRegion(const QPointF &point,
       // Glyphs overhang their metrics box, and an outline halo adds to that.
       const qreal overhang =
           annotation.kind == Annotation::Kind::Text
-              ? annotationTextFont(annotation.size, annotation.textFont)
+              ? annotationTextFont(annotation.size)
                         .pixelSize() *
                     0.2 * scale
               : 0.0;
@@ -5467,8 +5427,7 @@ void CaptureEditor::mouseMoveEvent(QMouseEvent *event) {
           // painted extent grows the canvas, so the handle remains reachable
           // without being clamped back to the source frame.
           const QRectF originalBounds = annotationBounds(originalAnnotation_);
-          const QFontMetricsF metrics(annotationTextFont(
-              annotation.size, annotation.textFont));
+          const QFontMetricsF metrics(annotationTextFont(annotation.size));
           const qreal padding = annotation.textBackground == TextBackground::Pill
                                     ? std::max<qreal>(4.0, metrics.height() * 0.18)
                                     : 0.0;
@@ -5748,9 +5707,7 @@ void CaptureEditor::mousePressEvent(QMouseEvent *event) {
     tool_ = Tool::Text;
     const qreal localX = cursor_.x() - textSizePanelRect().left();
     textSizeIndex_ = std::clamp(static_cast<int>(localX / 34.0), 0, 2);
-    setStatus(QStringLiteral("%1 · size %2 · wheel changes size · Shift+T "
-                             "cycles font")
-                  .arg(annotationTextFontName(textFont_))
+    setStatus(QStringLiteral("Size %1 · wheel changes size")
                   .arg(QString::fromLatin1(kTextSizeNames.at(
                       static_cast<std::size_t>(textSizeIndex_)))));
     update();
@@ -6278,7 +6235,7 @@ void CaptureEditor::mouseReleaseEvent(QMouseEvent *event) {
     } else {
       const qreal size = kTextSizes.at(static_cast<std::size_t>(textSizeIndex_));
       const qreal lineHeight =
-          QFontMetricsF(annotationTextFont(size, textFont_)).lineSpacing();
+          QFontMetricsF(annotationTextFont(size)).lineSpacing();
       const int lines = std::max(
           1, static_cast<int>(std::floor(box.height() / lineHeight + 0.25)));
       beginText(box.topLeft(), -1, lines);
@@ -6450,9 +6407,7 @@ void CaptureEditor::wheelEvent(QWheelEvent *event) {
     adjustSelectedAnnotation(step);
   } else if (tool_ == Tool::Text) {
     textSizeIndex_ = std::clamp(textSizeIndex_ + step, 0, 2);
-    setStatus(QStringLiteral("%1 · size %2 · wheel changes size · Shift+T "
-                             "cycles font")
-                  .arg(annotationTextFontName(textFont_))
+    setStatus(QStringLiteral("Size %1 · wheel changes size")
                   .arg(QString::fromLatin1(kTextSizeNames.at(
                       static_cast<std::size_t>(textSizeIndex_)))));
   } else if (tool_ == Tool::Freehand && !layerSelected &&
@@ -7918,9 +7873,8 @@ void CaptureEditor::paintEdit(QPainter &painter) {
         QString tooltip;
         if (tool_ == Tool::Text) {
           tooltip = QStringLiteral(
-                        "%1 · S  M  L · current %2 · Scroll wheel · %3 · T "
-                        "again cycles style · Shift+T cycles font")
-                        .arg(annotationTextFontName(textFont_))
+                        "S  M  L · current %1 · Scroll wheel · %2 · T "
+                        "again cycles style")
                         .arg(QString::fromLatin1(kTextSizeNames.at(
                             static_cast<std::size_t>(textSizeIndex_))))
                         .arg(textBackgroundName(textBackground_));

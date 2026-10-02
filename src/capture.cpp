@@ -16,7 +16,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QFontDatabase>
+#include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -45,33 +45,9 @@
 /// Mat a Framed canvas keeps beyond a layer that outgrew the normal frame.
 constexpr qreal kFramedLayerMargin = 15.0;
 
-bool loadCaptureFonts() {
-  static const std::array<int, 3> fontIds{
-      QFontDatabase::addApplicationFont(QStringLiteral(":/fonts/Neucha.ttf")),
-      QFontDatabase::addApplicationFont(
-          QStringLiteral(":/fonts/JetBrainsMono-Regular.ttf")),
-      QFontDatabase::addApplicationFont(
-          QStringLiteral(":/fonts/InterDisplay-SemiBold.ttf"))};
-  return std::ranges::all_of(fontIds, [](int id) { return id >= 0; });
-}
-
-QString annotationTextFontName(TextFont textFont) {
-  switch (textFont) {
-  case TextFont::Neucha:
-    return QStringLiteral("Neucha");
-  case TextFont::JetBrainsMono:
-    return QStringLiteral("JetBrains Mono");
-  case TextFont::InterDisplay:
-    return QStringLiteral("Inter Display");
-  }
-  return QStringLiteral("Neucha");
-}
-
-QFont annotationTextFont(qreal size, TextFont textFont) {
-  static_cast<void>(loadCaptureFonts());
-  QFont font(annotationTextFontName(textFont));
-  font.setWeight(textFont == TextFont::InterDisplay ? QFont::DemiBold
-                                                    : QFont::Normal);
+QFont annotationTextFont(qreal size) {
+  QFont font = QGuiApplication::font();
+  font.setWeight(QFont::Normal);
   font.setItalic(false);
   font.setPixelSize(qRound(std::max<qreal>(18.0, size * 5.0)));
   return font;
@@ -102,7 +78,7 @@ QStringList annotationTextLines(const Annotation &annotation,
       continue;
     }
     QTextLayout layout(paragraph,
-                       annotationTextFont(annotation.size, annotation.textFont));
+                       annotationTextFont(annotation.size));
     QTextOption option;
     option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
     layout.setTextOption(option);
@@ -122,7 +98,7 @@ QStringList annotationTextLines(const Annotation &annotation,
 QRectF annotationTextBounds(const Annotation &annotation,
                            qreal canvasWidth) {
   const QFontMetricsF metrics(
-      annotationTextFont(annotation.size, annotation.textFont));
+      annotationTextFont(annotation.size));
   const QStringList lines = annotationTextLines(annotation, canvasWidth);
   qreal widestLine = 0.0;
   for (const QString &line : lines) {
@@ -826,7 +802,7 @@ void drawAnnotation(QPainter &painter, const Annotation &annotation,
     return;
   }
 
-  const QFont font = annotationTextFont(annotation.size, annotation.textFont);
+  const QFont font = annotationTextFont(annotation.size);
   if (annotation.textBackground == TextBackground::Pill) {
     // A cream pill under the glyphs keeps text readable on any capture or
     // shape beneath it (the default text background).
@@ -2186,26 +2162,6 @@ bool backgroundStyleFromName(const QString &name, BackgroundStyle &style) {
 
 namespace {
 
-QString textFontStyleName(TextFont textFont) {
-  switch (textFont) {
-  case TextFont::Neucha:
-    return QStringLiteral("neucha");
-  case TextFont::JetBrainsMono:
-    return QStringLiteral("jetbrains-mono");
-  case TextFont::InterDisplay:
-    return QStringLiteral("inter-display");
-  }
-  return QStringLiteral("neucha");
-}
-
-TextFont textFontFromStyleName(const QString &name) {
-  if (name == QStringLiteral("jetbrains-mono"))
-    return TextFont::JetBrainsMono;
-  if (name == QStringLiteral("inter-display"))
-    return TextFont::InterDisplay;
-  return TextFont::Neucha;
-}
-
 QString canvasBoundaryModeName(CanvasBoundaryMode mode) {
   switch (mode) {
   case CanvasBoundaryMode::Framed:
@@ -2251,9 +2207,6 @@ QJsonObject annotationToJson(const Annotation &annotation) {
     object.insert(QStringLiteral("textWidth"), annotation.textWidth);
   if (!annotation.text.isEmpty())
     object.insert(QStringLiteral("text"), annotation.text);
-  if (annotation.kind == Annotation::Kind::Text)
-    object.insert(QStringLiteral("textFont"),
-                  textFontStyleName(annotation.textFont));
   if (annotation.number > 0)
     object.insert(QStringLiteral("number"), annotation.number);
   if (!annotation.points.isEmpty()) {
@@ -2321,8 +2274,6 @@ bool annotationFromJson(const QJsonObject &object, Annotation &annotation,
         pointFromArray(object.value(QStringLiteral("curveControl")));
   annotation.text = object.value(QStringLiteral("text")).toString();
   annotation.textWidth = object.value(QStringLiteral("textWidth")).toDouble(0.0);
-  annotation.textFont = textFontFromStyleName(
-      object.value(QStringLiteral("textFont")).toString());
   annotation.number = object.value(QStringLiteral("number")).toInt();
   annotation.points.clear();
   for (const QJsonValue point : object.value(QStringLiteral("points")).toArray())
