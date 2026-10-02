@@ -1,3 +1,4 @@
 build/
 stage/
+.xmake/
 *.tar.gz

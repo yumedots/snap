@@ -6,7 +6,7 @@ file, then ask whether the thing you need is genuinely absent from it.
 
 ## Link-time (build and runtime)
 
-From `CMakeLists.txt`, this is the entire list:
+From `xmake.lua`, this is the entire list:
 
 | Dependency | What it's for |
 |---|---|

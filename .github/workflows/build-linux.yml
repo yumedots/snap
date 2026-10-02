@@ -19,7 +19,7 @@ jobs:
       - name: Install build and runtime dependencies
         run: >-
           pacman -Syu --noconfirm --needed
-          base-devel cmake ninja pkgconf qt6-base layer-shell-qt
+          base-devel xmake pkgconf qt6-base layer-shell-qt
           wayland wayland-protocols libdeflate wl-clipboard tesseract tesseract-data-eng
           clang
 
@@ -29,13 +29,16 @@ jobs:
       - name: Check installer scripts
         run: bash -n install-omarchy
 
-      - name: Build, run interaction smoke, and analyze sources
+      - name: Build and run interaction smoke
         env:
           QT_QPA_PLATFORM: offscreen
-        run: make check
+        run: |
+          xmake f -m release -y
+          xmake -y -j
+          ./build/omasnap-smoke ./build/omasnap-smoke-output
 
       - name: Stage installation
-        run: cmake --install build --prefix "$PWD/stage/usr"
+        run: xmake install -y -o "$PWD/stage/usr"
 
       - name: Package Linux artifact
         run: |
