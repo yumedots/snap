@@ -1,6 +1,6 @@
-# Omasnap — Agent Guide
+# Snap — Agent Guide
 
-Omasnap is a super fast, native Wayland screenshot and annotation overlay,
+Snap is a super fast, native Wayland screenshot and annotation overlay,
 built for [Omarchy](https://omarchy.org) on Hyprland. It captures region,
 window, or full monitor (plus a scrolling-region mode that stitches a taller
 page into one image), then copies it and opens a floating compositor preview.
@@ -17,7 +17,7 @@ markers, text, OCR). Finished captures go to clipboard,
 Each of these has a longer writeup under `docs/` — read it before making a
 change that touches the principle, not just this summary.
 
-- **A specialized tool, not a general app.** Omasnap does one job — capture,
+- **A specialized tool, not a general app.** Snap does one job — capture,
   annotate, output — and does it fast. It is not a drawing program, not a
   file manager, not a general Wayland utility. A feature that isn't in
   service of "screenshot, mark it up, send it somewhere" doesn't belong
@@ -62,16 +62,16 @@ change that touches the principle, not just this summary.
   instead of linking their equivalents in-process. Know this list before
   proposing an addition to it. See [docs/dependencies.md](docs/dependencies.md).
 - **Single small binary.** Everything (capture, editor, pin mode, scroll
-  capture) runs from the one `omasnap` executable. Every new dependency or
+  capture) runs from the one `snap` executable. Every new dependency or
   vendored asset is weight every install carries.
 - **No backwards compatibility.** Break keybindings, CLI flags, file
   formats, or internals whenever it keeps the code simpler or the tool
   faster. Do not add compatibility shims, deprecation aliases, or migration
   code.
 - **Omarchy aesthetics.** `omarchy-notification-send` when available,
-  `OMASNAP_OCR_LANGS`/`OMARCHY_OCR_LANGS` fallback for OCR languages,
-  minimal vector-drawn icons (no icon-theme dependency), the bundled Neucha
-  font. Chrome text uses `chromeFont()`/`chromeMonoFont()`
+  `SNAP_OCR_LANGS`/`OMARCHY_OCR_LANGS` fallback for OCR languages,
+  minimal vector-drawn icons (no icon-theme dependency), and the system font
+  for annotation text. Chrome text uses `chromeFont()`/`chromeMonoFont()`
   (`src/overlay-chrome.cpp`), pinned in code, and `main()` installs
   `chromeDefaultFont()` as the application font; external desktop platform
   themes are deliberately bypassed at startup in favour of Qt's built-in
@@ -95,7 +95,7 @@ change that touches the principle, not just this summary.
 | `src/surface-capture.cpp` | In-process output/window capture via `ext-image-copy-capture` |
 | `src/cut.cpp/.hpp` | Cut-band tool: remove a strip and collapse the gap |
 | `src/recent-snaps.cpp/.hpp` | The recents shelf: shelving/reopening working documents |
-| `src/output-config.cpp/.hpp`, `src/palette-config.cpp/.hpp` | The optional `omasnap.conf` INI: output destination/filename, color presets |
+| `src/output-config.cpp/.hpp`, `src/palette-config.cpp/.hpp` | The optional `snap.conf` INI: output destination/filename, color presets |
 | `src/pin.cpp/.hpp`, `src/pin-file.cpp/.hpp`, `src/pin-layout.cpp/.hpp` | Floating pinned captures, their files, and compositor placement |
 | `src/pin-expiry.cpp/.hpp` | Preview countdown, interaction pauses, and fade |
 | `src/icons.cpp/.hpp` | Vector icon renderer for toolbar and pin controls |
@@ -103,33 +103,32 @@ change that touches the principle, not just this summary.
 | `src/eyedropper.cpp/.hpp` | Display-to-source color sampling |
 | `tests/*-smoke.cpp/.hpp` | Headless Qt Test coverage: offscreen region clicks, async capture, single-instance handover, stitching fixtures |
 | `docs/` | Longer writeups of the principles above — read before changing behavior they cover |
-| `install-omarchy` | Omarchy installer (deps via `omarchy-pkg-add`, installs to `~/.local`) |
-| `CMakeLists.txt` | Build definition; **the version lives here** (`project(omasnap VERSION ...)`) |
+| `xmake.lua` | Build definition; **the version lives here** (`local version = "1.21.0"`) |
 
 ## Build and verify
 
 ```bash
-make check
+xmake -y
+QT_QPA_PLATFORM=offscreen ./build/snap-smoke ./build/snap-smoke-output
 ```
 
-`make check` configures and builds the project, runs the complete headless
-offscreen Qt smoke suite (including simulated region clicks and asynchronous
-capture), runs `clang-tidy`, and runs `clazy-standalone`/`qmllint` when those
-tools and source types are available. Use `make build` for a build-only pass,
-`make smoke` for the behavioral smoke suite, and `make install` to install to
-`~/.local`.
+`xmake -y` builds every target (`snap`, `snap-core`, `snap-smoke`,
+`stitch-replay`). The second command runs the complete headless offscreen Qt
+smoke suite (including simulated region clicks and asynchronous capture).
+`xmake install` installs to `~/.local` — the app binary plus the Lucide
+license; the dev targets are excluded from install.
 
-Always run `make check` after behavioral changes. CI
+Always run the build and smoke suite after behavioral changes. CI
 (`.github/workflows/build-linux.yml`) runs the same build and smoke on every
 push and PR.
 
-Dependencies (Arch): `base-devel cmake ninja pkgconf qt6-base layer-shell-qt
+Dependencies (Arch): `base-devel xmake pkgconf qt6-base layer-shell-qt
 wayland wayland-protocols libdeflate wl-clipboard xdg-utils tesseract tesseract-data-eng`. See
 [docs/dependencies.md](docs/dependencies.md) before adding to this list.
 
 ## Release process
 
-1. Bump `project(omasnap VERSION ...)` in `CMakeLists.txt`.
+1. Bump `local version` in `xmake.lua`.
    Move the `Unreleased` entries in `CHANGELOG.md` into that version's
    section, add its comparison link, and start a fresh `Unreleased` section.
    Update the Unreleased comparison link to compare the new tag with `main`.
@@ -138,14 +137,6 @@ wayland wayland-protocols libdeflate wl-clipboard xdg-utils tesseract tesseract-
    attaches the build artifact to the release automatically.
    Copy the new changelog section into the GitHub release notes so users
    can read the changes alongside the download.
-4. **Update omarchy-pkgs on every new version release.** In the
-   [omarchy-pkgs](https://github.com/omacom-io/omarchy-pkgs) fork
-   (`pkgbuilds/omasnap/`):
-   - Set `pkgver` in `PKGBUILD` to the new version.
-   - Replace `sha256sums` with the hash of
-     `https://github.com/tobi/omasnap/archive/refs/tags/v<version>.tar.gz`
-     (`curl -sL <url> | sha256sum`).
-   - Commit on a branch and open a PR to `omacom-io/omarchy-pkgs`.
 
 See `README.md` for user-facing features, keybindings, and install
 instructions — keep it in sync when behavior changes.

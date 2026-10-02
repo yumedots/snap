@@ -1,4 +1,4 @@
-# Omasnap
+# Snap
 
 See the [changelog](CHANGELOG.md) for release highlights and unreleased changes.
 
@@ -12,8 +12,6 @@ copying again, dragging into another app, or opening the editor on demand.
 The preview fades after 10 seconds of idle time. Hovering and unfinished actions
 pause its countdown. The pin button, `Ctrl+P`, `T` while hovered, or dragging the
 preview keeps it on screen.
-
-[![Looping Omasnap demonstration](assets/omasnap.gif)](assets/omasnap.mp4)
 
 ## Features
 
@@ -50,9 +48,9 @@ preview keeps it on screen.
   freehand strokes; and translucent highlighter
   strokes that automatically match and stay straight across screenshot text (with
   freehand fallback), plus hollow or filled rectangles (optionally rounded) and
-  ellipses, numbered markers, editable text in Neucha, JetBrains Mono, or Inter
-  Display (plain, outlined, or on a readability pill), and secure redaction with
-  opaque or randomized non-spatial mosaic output.
+  ellipses, numbered markers, editable text in the system font (plain, outlined,
+  or on a readability pill), and secure redaction with opaque or randomized
+  non-spatial mosaic output.
 - Per-layer preset or custom colors (including highlighter ink), undo/redo history,
   one-click whole-image or drag-region OCR (the recognized text is shown beside
   the image and copied to the clipboard),
@@ -68,14 +66,14 @@ preview keeps it on screen.
   Moving or resizing an existing layer suspends the armed tool's action until
   release, then leaves the tool ready for the next canvas gesture.
 - Pin a finished capture as a bottom-right floating compositor window, launched
-  from the same `omasnap` executable and visible on every workspace.
+  from the same `snap` executable and visible on every workspace.
   Pins form a compact deck with the recents shelf's alternating tilt while
   idle; hover to straighten and fan them out.
   Dropping a pin partly off-screen or underneath a bar brings it fully back
   inside the monitor where the drag started, with the same 14-pixel gap as
   the stack from any screen edge or reserved bar area.
-- Crash-resistant working documents under `/run/user/<UID>/omasnap/` (falling back to
-  a private `/tmp/omasnap-<UID>/`): the original source image plus a sidecar JSON
+- Crash-resistant working documents under `/run/user/<UID>/snap/` (falling back to
+  a private `/tmp/snap-<UID>/`): the original source image plus a sidecar JSON
   operation log. Undo still works after a crash or `--file` reopen. Saving and
   copying write a normal flattened PNG to the clipboard or `~/Pictures/Screenshots`.
 - Verified PNG clipboard output through `wl-copy`/`wl-paste`, plus timestamped files
@@ -106,21 +104,41 @@ Runtime commands used by the application:
 - `wl-copy` and `wl-paste`
 - `tesseract`
 - `omarchy-notification-send` when available; saved captures include a thumbnail and
-  reopen in Omasnap when clicked. Notification failure does not invalidate output.
+  reopen in Snap when clicked. Notification failure does not invalidate output.
 
-## Install on Omarchy
+## Install
 
-Clone the repository and run the Omarchy installer:
+Install the dependencies (Arch):
 
 ```bash
-git clone https://github.com/tobi/omasnap.git
-cd omasnap
-./install-omarchy
+sudo pacman -S --needed \
+  base-devel xmake pkgconf qt6-base layer-shell-qt \
+  wayland wayland-protocols libdeflate hyprland wl-clipboard xdg-utils \
+  tesseract tesseract-data-eng
 ```
 
-The installer uses Omarchy's package helper for missing dependencies, builds in
-`~/.cache/omasnap`, and installs under `~/.local`. It does not modify
-Hyprland configuration.
+Clone the repository and build with xmake:
+
+```bash
+git clone https://github.com/yumedots/snap.git
+cd snap
+xmake -y
+xmake install -y
+```
+
+`xmake install` places:
+
+- `~/.local/bin/snap`
+- `~/.local/share/licenses/snap/Lucide-ISC.txt`
+
+snap is a terminal tool: it installs no `.desktop` file and never appears in an
+application launcher. Ensure `~/.local/bin` is on `PATH`, then run `snap` from a
+shell, or bind it to a key below:
+
+```bash
+snap --version
+snap --help
+```
 
 Pinned-window placement uses the Lua dispatcher on Omarchy’s Hyprland.
 
@@ -133,18 +151,18 @@ hl.unbind("PRINT")
 hl.unbind("F12")
 hl.unbind("ALT + SHIFT + 4")
 
-o.bind("PRINT", "Screenshot", "omasnap")
-o.bind("F12", "Screenshot", "omasnap")
-o.bind("ALT + SHIFT + 4", "Screenshot", "omasnap")
+o.bind("PRINT", "Screenshot", "snap")
+o.bind("F12", "Screenshot", "snap")
+o.bind("ALT + SHIFT + 4", "Screenshot", "snap")
 
 hl.layer_rule({
-  match = { namespace = "^omasnap$" },
+  match = { namespace = "^snap$" },
   no_anim = true,
   animation = "none",
 })
 ```
 
-Do not add `no_screen_share = true` to the Omasnap layer rule. Hyprland
+Do not add `no_screen_share = true` to the Snap layer rule. Hyprland
 replaces an excluded layer's entire rectangle with black in captures, including
 transparent areas. Because the scrolling overlay covers the monitor, that rule
 blacks out the live region and prevents stitching. If you used an earlier version
@@ -165,49 +183,6 @@ hyprctl binds -j | jq -c \
 `omarchy plugin add` is intentionally not used. Omarchy plugins are Quickshell QML
 extensions; they do not install native executables or system packages.
 
-Set `OMASNAP_PREFIX` before running `install-omarchy` to use a prefix other than
-`~/.local`.
-
-### Manual Arch Linux build
-
-Install the complete build/runtime dependency set:
-
-```bash
-sudo pacman -S --needed \
-  base-devel cmake ninja pkgconf qt6-base layer-shell-qt \
-  wayland wayland-protocols libdeflate hyprland wl-clipboard xdg-utils \
-  tesseract tesseract-data-eng
-```
-
-Build and install:
-
-```bash
-cmake -S . -B build -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_INSTALL_PREFIX="$HOME/.local"
-cmake --build build --parallel
-cmake --install build
-```
-
-The install step places:
-
-- `~/.local/bin/omasnap`
-- `~/.local/share/applications/omasnap.desktop`
-- `~/.local/share/licenses/omasnap/Neucha-OFL.txt`
-- `~/.local/share/licenses/omasnap/JetBrainsMono-OFL.txt`
-- `~/.local/share/licenses/omasnap/Inter-OFL.txt`
-- `~/.local/share/licenses/omasnap/Lucide-ISC.txt`
-
-Launch Omasnap from the application launcher by searching for its name, or use
-the screenshot keybindings above.
-
-Ensure `~/.local/bin` is on `PATH`, then verify the installed CLI:
-
-```bash
-omasnap --version
-omasnap --help
-```
-
 ## CLI capture modes
 
 Running without arguments opens smart selection. Drag for a freeform region,
@@ -215,25 +190,25 @@ click a window to capture it, or click outside every window to capture the
 focused monitor:
 
 ```bash
-omasnap
+snap
 ```
 
 Explicit starting modes:
 
 ```bash
-omasnap --capture-region
-omasnap --capture-window
-omasnap --capture-fullscreen
+snap --capture-region
+snap --capture-window
+snap --capture-fullscreen
 ```
 
 Scroll capture stitches a region that is taller (or wider) than the screen:
 
 ```bash
-omasnap --scroll
+snap --scroll
 ```
 
 Drag a region, then pick a direction: **Scroll ↓ / →** scrolls the page
-yourself while omasnap captures each step, and **Auto ↓ / →** scrolls it for
+yourself while snap captures each step, and **Auto ↓ / →** scrolls it for
 you, one acknowledged notch at a time, stopping when the page stops moving.
 The frames are aligned and stitched into one image, copied, and shown in a timed
 preview. Keep it with the pin button, `Ctrl+P`, or `T` while hovered, or open its
@@ -242,10 +217,10 @@ editor to annotate it; `Ctrl`+wheel zooms and the wheel scrolls it.
 Positional capture modes are also accepted:
 
 ```bash
-omasnap region
-omasnap windows
-omasnap fullscreen
-omasnap smart
+snap region
+snap windows
+snap fullscreen
+snap smart
 ```
 
 These options choose what is initially selected. Completing a selection saves it, copies it,
@@ -271,7 +246,7 @@ fullscreen captures output immediately. Quick output cannot be combined with `--
 ### One instance, toggled by the same hotkey
 
 Only one capture overlay runs at a time, guarded by a lock file in the runtime snapshot
-directory. Starting omasnap while an overlay is open sends the running instance `SIGTERM`,
+directory. Starting snap while an overlay is open sends the running instance `SIGTERM`,
 which it handles with a clean Qt shutdown; the new process then exits without capturing.
 Pressing `PRINT` therefore opens the overlay and pressing it again dismisses it.
 
@@ -298,13 +273,13 @@ Exit codes:
 
 ### Edit an existing or clipboard image
 
-Point omasnap at any readable image and it opens straight into the annotation editor
+Point snap at any readable image and it opens straight into the annotation editor
 with the whole image selected, skipping the screen-capture step:
 
 ```bash
-omasnap ~/Pictures/Screenshots/screenshot-2026-08-11_10-00-00.png
+snap ~/Pictures/Screenshots/screenshot-2026-08-11_10-00-00.png
 # or
-omasnap --file /path/to/capture.png
+snap --file /path/to/capture.png
 ```
 
 New PNG exports retain their logical display size, so reopening a 2× capture
@@ -316,22 +291,22 @@ alone is not treated as a screenshot's display scale.
 To open the image currently on the Wayland clipboard:
 
 ```bash
-omasnap --clipboard
+snap --clipboard
 ```
 
 The clipboard must offer readable image data. Text-only clipboard contents return an
 error instead of opening an empty editor.
 
 File URLs are accepted too. A saved capture notification's "Click to edit" action launches
-`omasnap` on the finished screenshot, so it can be reopened and re-annotated. The action is
-handed to `omarchy-notification-send` as `--exec <omasnap> <file:// URL>`, separate argv
+`snap` on the finished screenshot, so it can be reopened and re-annotated. The action is
+handed to `omarchy-notification-send` as `--exec <snap> <file:// URL>`, separate argv
 words after a trailing `--exec`, which the shell runs directly without shell parsing.
 
 ### Recent captures
 
 Every completed capture keeps its working document, source plus operation log,
 on a shelf of the five most recent under
-`~/.local/state/omasnap/recent/` (`OMASNAP_RECENT_DIR` overrides). The select
+`~/.local/state/snap/recent/` (`SNAP_RECENT_DIR` overrides). The select
 overlay shows them as a small stack of cards on the right; hovering fans them out
 and clicking one reopens that capture in the editor, undo history intact, in place
 of a new screenshot. No annotation, Copy, Save, or pin action is required: the
@@ -344,7 +319,7 @@ The output still completes immediately. Persistence errors are logged.
 
 ### Theme
 
-Omasnap reads the current Omarchy palette from
+Snap reads the current Omarchy palette from
 `~/.local/state/omarchy/current/theme/colors.toml` and uses the surface, control,
 tooltip, and border colors in `shell.toml` when present. Theme changes update
 open windows automatically; missing or invalid values use readable defaults.
@@ -353,9 +328,9 @@ plugin or add a startup dependency.
 
 ### Configuration (optional)
 
-Omasnap has no settings UI and runs fine with no config at all. If you want to
+Snap has no settings UI and runs fine with no config at all. If you want to
 change where screenshots land or what they are called, create
-`~/.config/omasnap/omasnap.conf` (INI format); every key is optional:
+`~/.config/snap/snap.conf` (INI format); every key is optional:
 
 ```ini
 [editor]
@@ -399,6 +374,14 @@ image = ~/Pictures/backdrops/desk.jpg
 # automatic window-gray mat; `off` stays transparent. `custom` only takes
 # effect once `image` above loads successfully.
 default = custom
+
+[preview]
+# Corner the preview and pin stack packs against: any combination of
+# left/right and top/bottom. Default: right bottom.
+position = left bottom
+# Pixel offset from that corner (default 0).
+x = 0
+y = 0
 ```
 
 Filename tokens:
@@ -414,17 +397,19 @@ The default keeps the date first so the folder always sorts chronologically:
 literal text (`screenshot-` is just a string). A name that already exists
 gets `-2`, `-3`, … appended.
 
-Environment overrides (`OMASNAP_SCREENSHOT_DIR` takes precedence over the config):
+Environment overrides (`SNAP_SCREENSHOT_DIR` takes precedence over the config):
 
 ```bash
-OMASNAP_SCREENSHOT_DIR="$HOME/Pictures/Captures" omasnap
-OMASNAP_OCR_LANGS="eng+deu" omasnap
+SNAP_SCREENSHOT_DIR="$HOME/Pictures/Captures" snap
+SNAP_OCR_LANGS="eng+deu" snap
 # Thai plus English:
-OMASNAP_OCR_LANGS="tha+eng" omasnap
+SNAP_OCR_LANGS="tha+eng" snap
+# Preview corner, overriding [preview] position:
+SNAP_PREVIEW_POSITION="left bottom" snap
 ```
 
 Install the corresponding Tesseract language data before adding a language to
-`OMASNAP_OCR_LANGS`. When unset, omasnap falls back to Omarchy's
+`SNAP_OCR_LANGS`. When unset, snap falls back to Omarchy's
 `OMARCHY_OCR_LANGS` (which commonly includes the user's script, e.g.
 `tha+eng`), then to `eng`.
 
@@ -457,15 +442,15 @@ controls to return focus from the live page.
 | `Tab` / `Shift+Tab` | Cycle the region's shape: free (default), square, 3:4, 16:9; works mid-drag |
 | `S` | Toggle scrolling-region mode |
 | `E` / `A` | Toggle annotation after capture; the capture guide shows on/off, and the choice also applies to scrolling captures |
-| `R` | Restore the last drawn region, including from a previous Omasnap launch in this login session (same monitor and overlay size) |
+| `R` | Restore the last drawn region, including from a previous Snap launch in this login session (same monitor and overlay size) |
 | `SUPER + Arrow` | Move among windows in window mode |
 | `Enter` | Capture the highlighted window |
 | `Ctrl+A` | Select the full focused monitor |
 | Hover the right-edge stack | Fan out the five most recent captures; click one to reopen it |
 | `Esc` | Dismiss; cancel a selection drag if one is in progress |
 
-Region memory is stored in Omasnap's private runtime directory. It survives
-closing and reopening Omasnap and lasts until those runtime files are removed
+Region memory is stored in Snap's private runtime directory. It survives
+closing and reopening Snap and lasts until those runtime files are removed
 (normally when the login session ends). A region from another monitor, a
 different overlay size, or outside the current screen is ignored; draw a new
 region after changing the display layout.
@@ -486,8 +471,7 @@ region after changing the display layout.
 | `E` | Ellipse; shares the shape submenu and filled/hollow toggle |
 | `D` | Redact; press again to toggle randomized pixelation or solid redaction |
 | `X` | Cut out a band; drag to preview the crossed-out strip, then release to remove and collapse it |
-| `T` | Text on a cream readability pill, with Neucha as the default. Click for a one-line label, or drag a box to give it room for several lines: Enter moves to the next line while there is room and commits on the last one; `Shift+Enter` always adds a line; `Esc` commits the text and dismisses the annotator; long text wraps at the current canvas edge by default, while moving it or dragging its width handle beyond that edge expands the canvas; clicking away keeps the text; press T again to toggle the pill |
-| `Shift+T` | Cycle the next or selected text through Neucha, JetBrains Mono, and Inter Display |
+| `T` | Text on a cream readability pill, in the system font. Click for a one-line label, or drag a box to give it room for several lines: Enter moves to the next line while there is room and commits on the last one; `Shift+Enter` always adds a line; `Esc` commits the text and dismisses the annotator; long text wraps at the current canvas edge by default, while moving it or dragging its width handle beyond that edge expands the canvas; clicking away keeps the text; press T again to toggle the pill |
 | `O` | Recognize and copy all text in the current image |
 | `B` | Cycle shadowed colors, window gray (shadowed and flat), and Off |
 | `Shift+B` | Toggle the screenshot card's drop shadow; on by default |
@@ -539,12 +523,12 @@ the preview available throughout annotation.
 
 In the editor, `Ctrl+P` or `P` renders a capture that stays pinned. It writes a
 `pin-<pid>-<n>-<random>.png` under the runtime snapshot directory, and launches
-the same `omasnap` executable in
+the same `snap` executable in
 detached pin mode. Hyprland floats and pins each window on every workspace.
 Idle pins overlap in a compact deck at the focused monitor's bottom-right
 corner, newest in front. The front card stays straight; the cards behind it
 alternate the same growing lean as the recents shelf: −3°, +6°, −9°, +12°.
-Omasnap paints the rounded frames with the images so their edges tilt together,
+Snap paints the rounded frames with the images so their edges tilt together,
 with transparent corners that take no input. Theme changes keep this single frame
 without adding a second compositor outline.
 Hover to straighten and fan them upward into fully exposed cards, wrapping into
@@ -633,7 +617,8 @@ original source frame.
 ## Development and verification
 
 ```bash
-make check
+xmake -y
+QT_QPA_PLATFORM=offscreen ./build/snap-smoke ./build/snap-smoke-output
 ```
 
 The smoke executable exercises smart/region/window/fullscreen startup modes, capture selection,
@@ -648,15 +633,15 @@ For live launch profiling, the binary has an opt-in millisecond trace from `main
 through the first completed overlay paint:
 
 ```bash
-OMASNAP_PROFILE_STARTUP=1 ./build/omasnap 2>startup.log
+SNAP_PROFILE_STARTUP=1 ./build/snap 2>startup.log
 ```
 
 The trace also breaks native capture into Wayland registry, buffer allocation, frame wait,
 and pixel handoff stages, and marks output readiness separately from subsequent
 recent-history persistence. It is completely silent by default.
 
-`.github/workflows/build-linux.yml` runs the same `make check` build, interaction smoke,
-and available static-analysis checks in an Arch Linux container, stages the CMake installation, and uploads a versioned Linux
+`.github/workflows/build-linux.yml` runs the same xmake build and offscreen interaction
+smoke in an Arch Linux container, stages the xmake installation, and uploads a versioned Linux
 artifact. A `v*` tag also attaches that artifact to the corresponding GitHub release.
 
 ## Acknowledgements
@@ -669,15 +654,11 @@ The capture and annotation workflow is inspired by three excellent screenshot to
   approachable annotation toolbar.
 
 Thanks to their authors and contributors for establishing the interaction patterns that made
-this project possible. Omasnap is an independent implementation and is not
+this project possible. Snap is an independent implementation and is not
 affiliated with those projects.
 
 ## Project history
 
 This standalone repository was extracted with `git filter-repo` from the original Omarchy
-system-customization repository. The former `omasnap/` directory was promoted to
+system-customization repository. The former `snap/` directory was promoted to
 the repository root while retaining its relevant commit history.
-
-The bundled Neucha, JetBrains Mono, and Inter Display fonts are distributed
-under the SIL Open Font License. Their provenance and hashes are recorded in
-`assets/FONTS.md`; their licenses are installed with the application.
