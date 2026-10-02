@@ -72,7 +72,6 @@ target("snap")
     add_files("src/main.cpp", "src/pin.cpp")
     add_deps("snap-core")
     add_defines('SNAP_VERSION="' .. version .. '"')
-    add_installfiles("snap.desktop", {prefixdir = "share/applications"})
     add_installfiles("assets/Lucide-ISC.txt", {prefixdir = "share/licenses/snap"})
 
 target("snap-smoke")

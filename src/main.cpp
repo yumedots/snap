@@ -152,7 +152,6 @@ int main(int argc, char **argv) {
   // from the theme. `-platformtheme gtk3` on the command line still
   // overrides this for debugging.
   qputenv("QT_QPA_PLATFORMTHEME", "generic");
-  QGuiApplication::setDesktopFileName(QStringLiteral("snap"));
   QApplication application(argc, argv);
   startupTimingMark("QApplication constructed");
   // With the external desktop theme bypassed, Qt's default font would be
