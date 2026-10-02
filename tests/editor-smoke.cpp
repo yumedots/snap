@@ -2529,24 +2529,24 @@ bool runPostCaptureChecks(QString &error, bool autosave) {
   };
   if (!executable(QStringLiteral("wl-copy"), QByteArrayLiteral(
           "#!/bin/sh\n"
-          "if [ -n \"$OMASNAP_TEST_COPY_FAIL\" ]; then echo unavailable >&2; exit 1; fi\n"
-          "cat > \"$OMASNAP_TEST_PIN_CLIPBOARD\"\n")) ||
+          "if [ -n \"$SNAP_TEST_COPY_FAIL\" ]; then echo unavailable >&2; exit 1; fi\n"
+          "cat > \"$SNAP_TEST_PIN_CLIPBOARD\"\n")) ||
       !executable(QStringLiteral("wl-paste"), QByteArrayLiteral(
-          "#!/bin/sh\ncat \"$OMASNAP_TEST_PIN_CLIPBOARD\"\n")))
+          "#!/bin/sh\ncat \"$SNAP_TEST_PIN_CLIPBOARD\"\n")))
     return false;
   const QByteArray oldPath = qgetenv("PATH");
-  const QByteArray oldClipboard = qgetenv("OMASNAP_TEST_PIN_CLIPBOARD");
-  const QByteArray oldFailure = qgetenv("OMASNAP_TEST_COPY_FAIL");
+  const QByteArray oldClipboard = qgetenv("SNAP_TEST_PIN_CLIPBOARD");
+  const QByteArray oldFailure = qgetenv("SNAP_TEST_COPY_FAIL");
   const auto restore = qScopeGuard([&] {
     qputenv("PATH", oldPath);
-    oldClipboard.isNull() ? qunsetenv("OMASNAP_TEST_PIN_CLIPBOARD")
-                          : qputenv("OMASNAP_TEST_PIN_CLIPBOARD", oldClipboard);
-    oldFailure.isNull() ? qunsetenv("OMASNAP_TEST_COPY_FAIL")
-                        : qputenv("OMASNAP_TEST_COPY_FAIL", oldFailure);
+    oldClipboard.isNull() ? qunsetenv("SNAP_TEST_PIN_CLIPBOARD")
+                          : qputenv("SNAP_TEST_PIN_CLIPBOARD", oldClipboard);
+    oldFailure.isNull() ? qunsetenv("SNAP_TEST_COPY_FAIL")
+                        : qputenv("SNAP_TEST_COPY_FAIL", oldFailure);
   });
   qputenv("PATH", directory.path().toUtf8() + ':' + oldPath);
-  qputenv("OMASNAP_TEST_PIN_CLIPBOARD", clipboard.toUtf8());
-  qunsetenv("OMASNAP_TEST_COPY_FAIL");
+  qputenv("SNAP_TEST_PIN_CLIPBOARD", clipboard.toUtf8());
+  qunsetenv("SNAP_TEST_COPY_FAIL");
 
   CaptureData capture;
   capture.monitor.geometry = {0, 0, 800, 600};
@@ -2559,12 +2559,12 @@ bool runPostCaptureChecks(QString &error, bool autosave) {
                        QStringLiteral("fixture"), QStringLiteral("test")}};
 
   const QByteArray oldConfigHome = qgetenv("XDG_CONFIG_HOME");
-  const QByteArray oldSaveDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
+  const QByteArray oldSaveDir = qgetenv("SNAP_SCREENSHOT_DIR");
   const auto restoreAutosave = qScopeGuard([&] {
     oldConfigHome.isNull() ? qunsetenv("XDG_CONFIG_HOME") : qputenv("XDG_CONFIG_HOME", oldConfigHome);
-    oldSaveDir.isNull() ? qunsetenv("OMASNAP_SCREENSHOT_DIR") : qputenv("OMASNAP_SCREENSHOT_DIR", oldSaveDir);
+    oldSaveDir.isNull() ? qunsetenv("SNAP_SCREENSHOT_DIR") : qputenv("SNAP_SCREENSHOT_DIR", oldSaveDir);
   });
-  qputenv("OMASNAP_SCREENSHOT_DIR", directory.filePath(QStringLiteral("saved")).toUtf8());
+  qputenv("SNAP_SCREENSHOT_DIR", directory.filePath(QStringLiteral("saved")).toUtf8());
   using Mode = CaptureEditor::CaptureMode;
   qputenv("XDG_CONFIG_HOME", directory.path().toUtf8());
   // The enabled case has no config: verify the actual built-in default.
@@ -2809,12 +2809,12 @@ bool runPostCaptureChecks(QString &error, bool autosave) {
     QTemporaryDir savedDirectory;
     if (!savedDirectory.isValid())
       return false;
-    const QByteArray oldOutputDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
+    const QByteArray oldOutputDir = qgetenv("SNAP_SCREENSHOT_DIR");
     const auto restoreOutput = qScopeGuard([&] {
-      oldOutputDir.isNull() ? qunsetenv("OMASNAP_SCREENSHOT_DIR")
-                           : qputenv("OMASNAP_SCREENSHOT_DIR", oldOutputDir);
+      oldOutputDir.isNull() ? qunsetenv("SNAP_SCREENSHOT_DIR")
+                           : qputenv("SNAP_SCREENSHOT_DIR", oldOutputDir);
     });
-    qputenv("OMASNAP_SCREENSHOT_DIR", savedDirectory.path().toUtf8());
+    qputenv("SNAP_SCREENSHOT_DIR", savedDirectory.path().toUtf8());
     QImage clipboardBefore(3, 2, QImage::Format_ARGB32_Premultiplied);
     clipboardBefore.fill(Qt::yellow);
     if (!clipboardBefore.save(clipboard))
@@ -2866,12 +2866,12 @@ bool runPostCaptureChecks(QString &error, bool autosave) {
   // points Reveal at the saved PNG. Only Copy + Save changes the clipboard.
   for (const auto key : {Qt::Key_S, Qt::Key_Return}) {
     const QTemporaryDir savedDirectory;
-    const QByteArray oldOutputDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
+    const QByteArray oldOutputDir = qgetenv("SNAP_SCREENSHOT_DIR");
     const auto restoreOutput = qScopeGuard([&] {
-      oldOutputDir.isNull() ? qunsetenv("OMASNAP_SCREENSHOT_DIR")
-                           : qputenv("OMASNAP_SCREENSHOT_DIR", oldOutputDir);
+      oldOutputDir.isNull() ? qunsetenv("SNAP_SCREENSHOT_DIR")
+                           : qputenv("SNAP_SCREENSHOT_DIR", oldOutputDir);
     });
-    qputenv("OMASNAP_SCREENSHOT_DIR", savedDirectory.path().toUtf8());
+    qputenv("SNAP_SCREENSHOT_DIR", savedDirectory.path().toUtf8());
     const QImage previousClipboard(clipboard);
     QString preview;
     const auto cleanup = qScopeGuard([&] {
@@ -3079,7 +3079,7 @@ bool runPostCaptureChecks(QString &error, bool autosave) {
   // Failures preserve the captured pixels in an editable recovery surface
   // and leave no abandoned pin document. Clipboard failure never launches.
   for (const bool clipboardFailure : {true, false}) {
-    qputenv("OMASNAP_TEST_COPY_FAIL", clipboardFailure ? "1" : "");
+    qputenv("SNAP_TEST_COPY_FAIL", clipboardFailure ? "1" : "");
     const QDir runtime(secureRuntimeDirectory());
     const auto before = runtime.entryList({QStringLiteral("pin-*")}, QDir::Files);
     CaptureEditor editor(capture, Mode::Fullscreen, QuickOutputMode::CopyAndPreview);
@@ -3117,16 +3117,16 @@ bool runQuickOutputChecks(QString &error) {
     error = QStringLiteral("Could not create quick-output directory");
     return false;
   }
-  const QByteArray previousDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
-  qputenv("OMASNAP_SCREENSHOT_DIR", directory.path().toUtf8());
+  const QByteArray previousDir = qgetenv("SNAP_SCREENSHOT_DIR");
+  qputenv("SNAP_SCREENSHOT_DIR", directory.path().toUtf8());
   outputError.clear();
   const bool saved = quickOutput(image, QuickOutputMode::Save, outputError, QSize(16, 12));
   const QStringList files =
       QDir(directory.path()).entryList({QStringLiteral("*.png")}, QDir::Files);
   if (previousDir.isEmpty())
-    qunsetenv("OMASNAP_SCREENSHOT_DIR");
+    qunsetenv("SNAP_SCREENSHOT_DIR");
   else
-    qputenv("OMASNAP_SCREENSHOT_DIR", previousDir);
+    qputenv("SNAP_SCREENSHOT_DIR", previousDir);
   if (!saved || !outputError.isEmpty() || files.size() != 1 ||
       QImage(QDir(directory.path()).filePath(files.constFirst())).isNull() ||
       QFile::exists(temporarySnapshotPath())) {
@@ -3232,7 +3232,7 @@ bool runScreenshotFilenameChecks(QString &error) {
   }
   {
     const QString configPath =
-        QDir(directory.path()).filePath(QStringLiteral("omasnap.conf"));
+        QDir(directory.path()).filePath(QStringLiteral("snap.conf"));
     QFile configFile(configPath);
     if (!configFile.open(QIODevice::WriteOnly | QIODevice::Text) ||
         configFile.write("[output]\ndirectory = ~/Captures\n"
@@ -3265,13 +3265,13 @@ bool runScreenshotFilenameChecks(QString &error) {
       return false;
     }
   }
-  const QByteArray previousDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
-  qputenv("OMASNAP_SCREENSHOT_DIR", directory.path().toUtf8());
+  const QByteArray previousDir = qgetenv("SNAP_SCREENSHOT_DIR");
+  qputenv("SNAP_SCREENSHOT_DIR", directory.path().toUtf8());
   const auto restoreDir = qScopeGuard([&previousDir] {
     if (previousDir.isEmpty())
-      qunsetenv("OMASNAP_SCREENSHOT_DIR");
+      qunsetenv("SNAP_SCREENSHOT_DIR");
     else
-      qputenv("OMASNAP_SCREENSHOT_DIR", previousDir);
+      qputenv("SNAP_SCREENSHOT_DIR", previousDir);
   });
   QImage image(4, 4, QImage::Format_RGB32);
   image.fill(Qt::red);
@@ -3311,10 +3311,10 @@ bool runCrashSnapshotChecks(const CaptureData &capture, QString &error) {
     error = QStringLiteral("Could not create crash-snapshot directory");
     return false;
   }
-  const QByteArray previousDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
-  qputenv("OMASNAP_SCREENSHOT_DIR", directory.path().toUtf8());
+  const QByteArray previousDir = qgetenv("SNAP_SCREENSHOT_DIR");
+  qputenv("SNAP_SCREENSHOT_DIR", directory.path().toUtf8());
   const auto restoreDir = qScopeGuard(
-      [&previousDir] { qputenv("OMASNAP_SCREENSHOT_DIR", previousDir); });
+      [&previousDir] { qputenv("SNAP_SCREENSHOT_DIR", previousDir); });
   const QString snapshotPath = temporarySnapshotPath();
   QFile::remove(snapshotPath);
   const auto settleUntilWritten = [&snapshotPath] {
@@ -3602,15 +3602,15 @@ bool runTextOutlineCheck(QString &error) {
 /** The editor window mode config key and the windowed editor's sizing. */
 bool runEditorWindowConfigCheck(QString &error) {
   const QString path =
-      QDir(QDir::tempPath()).filePath(QStringLiteral("omasnap-editor-mode.conf"));
+      QDir(QDir::tempPath()).filePath(QStringLiteral("snap-editor-mode.conf"));
   const QString floatRule = editorFloatRuleScript(true);
   const QString tiledRule = editorFloatRuleScript(false);
   if (!floatRule.contains(QStringLiteral("float = true")) ||
       !floatRule.contains(QStringLiteral("center = true")) ||
       tiledRule.contains(QStringLiteral("float = true")) ||
       !tiledRule.contains(QStringLiteral("enabled = false")) ||
-      !floatRule.contains(QStringLiteral("omasnap-editor-float")) ||
-      !tiledRule.contains(QStringLiteral("omasnap-editor-float"))) {
+      !floatRule.contains(QStringLiteral("snap-editor-float")) ||
+      !tiledRule.contains(QStringLiteral("snap-editor-float"))) {
     error = QStringLiteral("Editor float rule script is wrong");
     return false;
   }
@@ -3628,7 +3628,7 @@ bool runEditorWindowConfigCheck(QString &error) {
   const bool absent = loadEditorWindowMode(path);
   QFile::remove(path);
   const bool missing =
-      loadEditorWindowMode(QStringLiteral("/nonexistent/omasnap.conf"));
+      loadEditorWindowMode(QStringLiteral("/nonexistent/snap.conf"));
   if (!window || overlay || absent || missing) {
     error = QStringLiteral("[editor] mode was not read as window-or-default");
     return false;
@@ -3640,7 +3640,7 @@ bool runEditorWindowConfigCheck(QString &error) {
   const bool floating = loadEditorWindowFloating(path);
   QFile::remove(path);
   const bool floatDefault =
-      loadEditorWindowFloating(QStringLiteral("/nonexistent/omasnap.conf"));
+      loadEditorWindowFloating(QStringLiteral("/nonexistent/snap.conf"));
   if (tiled || !floating || !floatDefault) {
     error = QStringLiteral("[editor] window was not read as floating-or-tiled");
     return false;
@@ -3650,7 +3650,7 @@ bool runEditorWindowConfigCheck(QString &error) {
   const bool translucent = loadEditorWindowBackdropOpaque(path);
   QFile::remove(path);
   const bool opaqueDefault =
-      loadEditorWindowBackdropOpaque(QStringLiteral("/nonexistent/omasnap.conf"));
+      loadEditorWindowBackdropOpaque(QStringLiteral("/nonexistent/snap.conf"));
   if (translucent || !opaqueDefault) {
     error = QStringLiteral("[editor] backdrop was not read as opaque-or-not");
     return false;
@@ -4343,7 +4343,7 @@ bool runPinEditorReturnChecks(QApplication &application, QString &error) {
     }
     QCommandLineParser parser;
     configureCaptureCommandLine(parser, true);
-    if (!parser.parse(QStringList{QStringLiteral("omasnap")} + handoff)) {
+    if (!parser.parse(QStringList{QStringLiteral("snap")} + handoff)) {
       error = parser.errorText();
       return false;
     }
@@ -4501,7 +4501,7 @@ bool runEditorHandoffRoundTrip(QApplication &application, QString &error) {
   for (const QStringList &arguments : windowArguments) {
     QCommandLineParser parser;
     configureCaptureCommandLine(parser, true);
-    if (!parser.parse(QStringList{QStringLiteral("omasnap")} + arguments) ||
+    if (!parser.parse(QStringList{QStringLiteral("snap")} + arguments) ||
         !windowedEditorRequested(parser, false)) {
       error = QStringLiteral("Handoff argv selected the wrong Wayland shell");
       return false;
@@ -4509,7 +4509,7 @@ bool runEditorHandoffRoundTrip(QApplication &application, QString &error) {
   }
   QCommandLineParser overlayParser;
   configureCaptureCommandLine(overlayParser);
-  if (!overlayParser.parse({QStringLiteral("omasnap"), path,
+  if (!overlayParser.parse({QStringLiteral("snap"), path,
                             QStringLiteral("--editor=window"), QStringLiteral("--editor=OVERLAY")}) ||
       windowedEditorRequested(overlayParser, true)) {
     error = QStringLiteral("Repeated editor options did not use the final value");
@@ -5661,9 +5661,9 @@ bool runAsyncCaptureRegionSmoke(QApplication &application, QString &error) {
   }
 
   const QByteArray oldPath = qgetenv("PATH");
-  const QByteArray oldCapture = qgetenv("OMASNAP_TEST_CAPTURE");
+  const QByteArray oldCapture = qgetenv("SNAP_TEST_CAPTURE");
   qputenv("PATH", commands.path().toUtf8() + ':' + oldPath);
-  qputenv("OMASNAP_TEST_CAPTURE", sourcePath.toUtf8());
+  qputenv("SNAP_TEST_CAPTURE", sourcePath.toUtf8());
 
   CaptureData capture;
   capture.monitor.name = QStringLiteral("TEST");
@@ -5696,9 +5696,9 @@ bool runAsyncCaptureRegionSmoke(QApplication &application, QString &error) {
     editor.close();
     qputenv("PATH", oldPath);
     if (oldCapture.isEmpty())
-      qunsetenv("OMASNAP_TEST_CAPTURE");
+      qunsetenv("SNAP_TEST_CAPTURE");
     else
-      qputenv("OMASNAP_TEST_CAPTURE", oldCapture);
+      qputenv("SNAP_TEST_CAPTURE", oldCapture);
     return false;
   }
 
@@ -5713,9 +5713,9 @@ bool runAsyncCaptureRegionSmoke(QApplication &application, QString &error) {
   editor.close();
   qputenv("PATH", oldPath);
   if (oldCapture.isEmpty())
-    qunsetenv("OMASNAP_TEST_CAPTURE");
+    qunsetenv("SNAP_TEST_CAPTURE");
   else
-    qputenv("OMASNAP_TEST_CAPTURE", oldCapture);
+    qputenv("SNAP_TEST_CAPTURE", oldCapture);
 
   if (selected.size() != QSize(160, 120)) {
     error = QStringLiteral("Async capture region selection produced %1x%2")
@@ -6012,16 +6012,16 @@ bool runRecentsShelfSmoke(QApplication &application, QString &error) {
     error = QStringLiteral("Could not create recents shelf directories");
     return false;
   }
-  const QByteArray previousShelf = qgetenv("OMASNAP_RECENT_DIR");
-  const QByteArray previousDir = qgetenv("OMASNAP_SCREENSHOT_DIR");
-  qputenv("OMASNAP_RECENT_DIR", shelf.path().toUtf8());
-  qputenv("OMASNAP_SCREENSHOT_DIR", screenshots.path().toUtf8());
+  const QByteArray previousShelf = qgetenv("SNAP_RECENT_DIR");
+  const QByteArray previousDir = qgetenv("SNAP_SCREENSHOT_DIR");
+  qputenv("SNAP_RECENT_DIR", shelf.path().toUtf8());
+  qputenv("SNAP_SCREENSHOT_DIR", screenshots.path().toUtf8());
   const auto restoreEnv = qScopeGuard([&] {
-    qputenv("OMASNAP_RECENT_DIR", previousShelf);
+    qputenv("SNAP_RECENT_DIR", previousShelf);
     if (previousDir.isEmpty())
-      qunsetenv("OMASNAP_SCREENSHOT_DIR");
+      qunsetenv("SNAP_SCREENSHOT_DIR");
     else
-      qputenv("OMASNAP_SCREENSHOT_DIR", previousDir);
+      qputenv("SNAP_SCREENSHOT_DIR", previousDir);
   });
 
   CaptureData capture;
@@ -6276,8 +6276,8 @@ bool runNotificationArgvCheck(QString &error) {
   const QString &url = saved.at(exec + 2);
   if (program.isEmpty() || program.contains(QStringLiteral("'")) ||
       program.contains(QStringLiteral(" ")) ||
-      !program.endsWith(QStringLiteral("omasnap"))) {
-    error = QStringLiteral("click program is not a bare omasnap path: %1")
+      !program.endsWith(QStringLiteral("snap"))) {
+    error = QStringLiteral("click program is not a bare snap path: %1")
                 .arg(program);
     return false;
   }
@@ -9006,7 +9006,7 @@ bool runCenteredCreationSmoke(QApplication &application, QString &error) {
     return false;
   }
 
-  // Spotlight (Omasnap's own drag-rectangle shape) centers the same way.
+  // Spotlight (Snap's own drag-rectangle shape) centers the same way.
   QTest::keyClick(&editor, Qt::Key_S);
   QTest::mousePress(&editor, Qt::LeftButton, Qt::AltModifier, QPoint(600, 412));
   QTest::mouseMove(&editor, QPoint(660, 452), 20);
@@ -12015,16 +12015,16 @@ int main(int argc, char **argv) {
   QTemporaryDir smokeShelf;
   if (!smokeShelf.isValid())
     return 18;
-  qputenv("OMASNAP_RECENT_DIR", smokeShelf.path().toUtf8());
-  qputenv("OMASNAP_PREVIEW_POSITION", "right bottom");
-  qputenv("OMASNAP_PREVIEW_X", "0");
-  qputenv("OMASNAP_PREVIEW_Y", "0");
+  qputenv("SNAP_RECENT_DIR", smokeShelf.path().toUtf8());
+  qputenv("SNAP_PREVIEW_POSITION", "right bottom");
+  qputenv("SNAP_PREVIEW_X", "0");
+  qputenv("SNAP_PREVIEW_Y", "0");
 
   // Live output capture against a real compositor (the smoke's own Wayland
   // connection; Qt's platform does not matter): open a session on the named
   // output and grab several frames through the same buffer, timing them,
   // since scroll capture needs many per second.
-  const QString liveOutputName = qEnvironmentVariable("OMASNAP_SMOKE_OUTPUT");
+  const QString liveOutputName = qEnvironmentVariable("SNAP_SMOKE_OUTPUT");
   if (!liveOutputName.isEmpty()) {
     OutputCapture output;
     QString outputError;
@@ -12055,7 +12055,7 @@ int main(int argc, char **argv) {
     const QString liveRoot =
         argc > 1 ? QString::fromLocal8Bit(argv[1])
                  : QDir(QDir::tempPath())
-                       .filePath(QStringLiteral("omasnap-native-smoke"));
+                       .filePath(QStringLiteral("snap-native-smoke"));
     if (!frame.save(liveRoot + QStringLiteral("-native-output.png"), "PNG"))
       return 105;
     return 0;
@@ -12590,7 +12590,7 @@ int main(int argc, char **argv) {
   const QString outputRoot =
       argc > 1 ? QString::fromLocal8Bit(argv[1])
                : QDir(QDir::tempPath())
-                     .filePath(QStringLiteral("omasnap-native-smoke"));
+                     .filePath(QStringLiteral("snap-native-smoke"));
   if (!runBackdropPreviewMatchesExport(application, outputRoot, snapshotError)) {
     qWarning().noquote() << snapshotError;
     return 214;
@@ -12603,7 +12603,7 @@ int main(int argc, char **argv) {
   QFile::remove(snapshotPath);
   const QString savedRoot = QDir(outputRoot).filePath(QStringLiteral("saved"));
   QDir(savedRoot).removeRecursively();
-  qputenv("OMASNAP_SCREENSHOT_DIR", savedRoot.toUtf8());
+  qputenv("SNAP_SCREENSHOT_DIR", savedRoot.toUtf8());
 
   CaptureData capture;
   capture.monitor.name = QStringLiteral("TEST");
@@ -13569,15 +13569,15 @@ int main(int argc, char **argv) {
   if (!recognizeText(ocrImage, ocrError)
            .contains(QStringLiteral("OCR smoke test 42")))
     return 5;
-  const QByteArray savedOmasnapLangs = qgetenv("OMASNAP_OCR_LANGS");
+  const QByteArray savedSnapLangs = qgetenv("SNAP_OCR_LANGS");
   const QByteArray savedOmarchyLangs = qgetenv("OMARCHY_OCR_LANGS");
-  qputenv("OMASNAP_OCR_LANGS", "");
+  qputenv("SNAP_OCR_LANGS", "");
   qputenv("OMARCHY_OCR_LANGS", "eng");
   const QString fallbackOcr = recognizeText(ocrImage, ocrError);
-  if (savedOmasnapLangs.isEmpty())
-    qunsetenv("OMASNAP_OCR_LANGS");
+  if (savedSnapLangs.isEmpty())
+    qunsetenv("SNAP_OCR_LANGS");
   else
-    qputenv("OMASNAP_OCR_LANGS", savedOmasnapLangs);
+    qputenv("SNAP_OCR_LANGS", savedSnapLangs);
   if (savedOmarchyLangs.isEmpty())
     qunsetenv("OMARCHY_OCR_LANGS");
   else
@@ -13627,7 +13627,7 @@ int main(int argc, char **argv) {
   }
   if (!QFile::exists(savedPath))
     return 70;
-  if (qEnvironmentVariableIsSet("OMASNAP_SMOKE_COPY")) {
+  if (qEnvironmentVariableIsSet("SNAP_SMOKE_COPY")) {
     QString clipboardError;
     if (!copyPngFileToClipboard(savedPath, clipboardError)) {
       qWarning().noquote() << clipboardError;

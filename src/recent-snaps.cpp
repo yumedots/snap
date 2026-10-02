@@ -72,7 +72,7 @@ bool waitForPendingCaptures(const QDir &dir, const QString &id = {}) {
 } // namespace
 
 QString recentSnapsDirectory() {
-  QString root = qEnvironmentVariable("OMASNAP_RECENT_DIR");
+  QString root = qEnvironmentVariable("SNAP_RECENT_DIR");
   if (root.isEmpty()) {
     const QString state =
         QStandardPaths::writableLocation(QStandardPaths::StateLocation);

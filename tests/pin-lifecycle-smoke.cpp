@@ -103,12 +103,12 @@ bool runPinLifecycleSmoke(QString &error) {
     error = QStringLiteral("Could not create pin path export directory");
     return false;
   }
-  const QByteArray oldDirectory = qgetenv("OMASNAP_SCREENSHOT_DIR");
+  const QByteArray oldDirectory = qgetenv("SNAP_SCREENSHOT_DIR");
   const auto restoreDirectory = qScopeGuard([&] {
-    oldDirectory.isNull() ? qunsetenv("OMASNAP_SCREENSHOT_DIR")
-                          : qputenv("OMASNAP_SCREENSHOT_DIR", oldDirectory);
+    oldDirectory.isNull() ? qunsetenv("SNAP_SCREENSHOT_DIR")
+                          : qputenv("SNAP_SCREENSHOT_DIR", oldDirectory);
   });
-  qputenv("OMASNAP_SCREENSHOT_DIR", screenshots.path().toUtf8());
+  qputenv("SNAP_SCREENSHOT_DIR", screenshots.path().toUtf8());
   const QString sourcePath = pinnedSnapshotPath(987661);
   QString exportedPath;
   if (!savePinnedSnapshot(image, sourcePath, QSize(4, 4), error))

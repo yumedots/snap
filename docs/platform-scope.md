@@ -1,6 +1,6 @@
 # Platform scope: Wayland + Hyprland, on purpose
 
-Omasnap targets one platform: **Wayland, on Hyprland.** This is
+Snap targets one platform: **Wayland, on Hyprland.** This is
 not a starting point we intend to broaden into a general Linux screenshot
 tool. It is a deliberate choice that keeps the code small and lets it use
 real platform facilities instead of lowest-common-denominator
@@ -26,7 +26,7 @@ abstractions.
   Hyprland quirk, not a generic Wayland rule.
 - Hyprland's `no_screen_share` layer rule draws a black rectangle over the
   layer's full bounds in output captures, including transparent regions. Do not
-  apply it to Omasnap: the scrolling overlay needs to capture the live desktop
+  apply it to Snap: the scrolling overlay needs to capture the live desktop
   through its transparent region. Ordinary captures happen before the overlay
   maps and do not need an exclusion rule.
 

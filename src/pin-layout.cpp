@@ -74,7 +74,7 @@ PreviewPlacement pinPlacement() {
     }
     return parsed;
   };
-  const QString env = qEnvironmentVariable("OMASNAP_PREVIEW_POSITION");
+  const QString env = qEnvironmentVariable("SNAP_PREVIEW_POSITION");
   PreviewPlacement place;
   if (!env.isEmpty())
     place = parse(env);
@@ -83,8 +83,8 @@ PreviewPlacement pinPlacement() {
       settings.value(QStringLiteral("preview/position")).toString().trimmed();
   if (env.isEmpty() && !position.isEmpty())
     place = parse(position);
-  const QString envX = qEnvironmentVariable("OMASNAP_PREVIEW_X");
-  const QString envY = qEnvironmentVariable("OMASNAP_PREVIEW_Y");
+  const QString envX = qEnvironmentVariable("SNAP_PREVIEW_X");
+  const QString envY = qEnvironmentVariable("SNAP_PREVIEW_Y");
   place.x = envX.isEmpty() ? settings.value(QStringLiteral("preview/x"), 0).toInt()
                             : envX.toInt();
   place.y = envY.isEmpty() ? settings.value(QStringLiteral("preview/y"), 0).toInt()

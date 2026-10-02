@@ -276,9 +276,9 @@ QString secureRuntimeDirectory() {
       QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
   if (runtime.isEmpty()) {
     runtime = QDir(QDir::tempPath())
-                  .filePath(QStringLiteral("omasnap-%1").arg(::getuid()));
+                  .filePath(QStringLiteral("snap-%1").arg(::getuid()));
   } else {
-    runtime = QDir(runtime).filePath(QStringLiteral("omasnap"));
+    runtime = QDir(runtime).filePath(QStringLiteral("snap"));
   }
   return ensurePrivateDirectory(runtime) ? QDir::cleanPath(runtime) : QString();
 }
@@ -343,12 +343,12 @@ QString runtimePath(const QString &name) {
 }
 
 QString suggestedScreenshotPathImpl(const QString &appSlug) {
-  // Precedence: OMASNAP_SCREENSHOT_DIR, then [output] directory in the
+  // Precedence: SNAP_SCREENSHOT_DIR, then [output] directory in the
   // config, then ~/Pictures/Screenshots. The filename pattern comes from
   // [output] filename; its default keeps the date first so the folder always
   // sorts chronologically.
   const OutputConfig config = loadOutputConfig(defaultConfigPath());
-  QString root = qEnvironmentVariable("OMASNAP_SCREENSHOT_DIR");
+  QString root = qEnvironmentVariable("SNAP_SCREENSHOT_DIR");
   if (root.isEmpty())
     root = config.directory;
   if (root.isEmpty())
@@ -1323,7 +1323,7 @@ bool captureMonitorPixels(const MonitorInfo &monitor, CaptureData &capture,
     startupTimingMark("hyprctl clients launched");
   }
 
-  const QString testCapture = qEnvironmentVariable("OMASNAP_TEST_CAPTURE");
+  const QString testCapture = qEnvironmentVariable("SNAP_TEST_CAPTURE");
   if (!testCapture.isEmpty()) {
     if (!capture.source.load(testCapture)) {
       error = QStringLiteral("Screen capture failed: could not load test "
@@ -2548,7 +2548,7 @@ QString recognizeText(const QImage &image, QString &error) {
     return {};
   }
 
-  QString languages = qEnvironmentVariable("OMASNAP_OCR_LANGS");
+  QString languages = qEnvironmentVariable("SNAP_OCR_LANGS");
   if (languages.isEmpty())
     languages =
         qEnvironmentVariable("OMARCHY_OCR_LANGS", QStringLiteral("eng"));
@@ -2576,20 +2576,20 @@ QString recognizeText(const QImage &image, QString &error) {
 QStringList captureNotificationArguments(const QString &message,
                                          const QString &imagePath) {
   QStringList arguments{QStringLiteral("-g"), QStringLiteral(""),
-                        QStringLiteral("--app-name"), QStringLiteral("omasnap"),
+                        QStringLiteral("--app-name"), QStringLiteral("snap"),
                         QStringLiteral("-t"), QStringLiteral("4500"), message};
   if (!imagePath.isEmpty()) {
     const QString imageUrl =
         QUrl::fromLocalFile(imagePath).toString(QUrl::FullyEncoded);
-    QString omasnap = QDir(QCoreApplication::applicationDirPath())
-                          .filePath(QStringLiteral("omasnap"));
-    if (!QFileInfo::exists(omasnap))
-      omasnap = QStringLiteral("omasnap");
+    QString snap = QDir(QCoreApplication::applicationDirPath())
+                          .filePath(QStringLiteral("snap"));
+    if (!QFileInfo::exists(snap))
+      snap = QStringLiteral("snap");
     // --exec consumes the rest of the command line as the click command's
     // argv, which omarchy-notification-send runs without shell parsing. It
     // must come last and be given as separate words, never one quoted string.
     arguments << QStringLiteral("Click to edit") << QStringLiteral("--image")
-              << imagePath << QStringLiteral("--exec") << omasnap << imageUrl;
+              << imagePath << QStringLiteral("--exec") << snap << imageUrl;
   }
   return arguments;
 }

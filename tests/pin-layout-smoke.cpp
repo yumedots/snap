@@ -198,7 +198,7 @@ bool runPinLayoutSmoke(QString &error) {
   for (const auto &[arguments, pinned] : invocations) {
     QCommandLineParser parser;
     configureCaptureCommandLine(parser, true);
-    if (!parser.parse(QStringList{QStringLiteral("omasnap")} + arguments) ||
+    if (!parser.parse(QStringList{QStringLiteral("snap")} + arguments) ||
         (parser.isSet(QStringLiteral("pin")) || parser.isSet(QStringLiteral("preview"))) != pinned) {
       error = QStringLiteral("Pin argv selected the wrong Wayland shell");
       return false;
@@ -343,7 +343,7 @@ bool runPinLayoutSmoke(QString &error) {
     return false;
   }
 
-  qputenv("OMASNAP_PREVIEW_POSITION", "left bottom");
+  qputenv("SNAP_PREVIEW_POSITION", "left bottom");
   const auto leftSlot = pinPackedPosition({}, screen, pin, 10, 14);
   const bool leftColumn = pinInColumn(QRect(14, 26, 100, 80), screen, 14, 10);
   const QVector<QPair<QString, QRect>> leftStack{
@@ -351,9 +351,9 @@ bool runPinLayoutSmoke(QString &error) {
       {QStringLiteral("high"), QRect(14, 116, 100, 80)}};
   const PinInsertionPlan leftBetween = pinInsertionPlan(
       leftStack, {}, QRect(14, 140, 100, 80), screen, 10, 14);
-  qputenv("OMASNAP_PREVIEW_POSITION", "right top");
+  qputenv("SNAP_PREVIEW_POSITION", "right top");
   const auto topSlot = pinPackedPosition({}, screen, pin, 10, 14);
-  qputenv("OMASNAP_PREVIEW_POSITION", "right bottom");
+  qputenv("SNAP_PREVIEW_POSITION", "right bottom");
   if (!leftSlot || *leftSlot != QPoint(14, 206) || !leftColumn ||
       leftBetween.index != 1 ||
       leftBetween.spot != QRect(14, 116, 100, 80) || !topSlot ||

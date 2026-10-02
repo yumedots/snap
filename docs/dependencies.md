@@ -28,7 +28,7 @@ On a captured 6K desktop, Qt's default PNG encoding took about 3 seconds;
 even its fastest compressed setting took about 700 ms. Libdeflate brought
 compression to about 150 ms with identical decoded pixels and similar file
 size. It earns its dependency by removing that capture-to-preview delay.
-The fast encoder also writes Omasnap's small logical-size PNG text field, so
+The fast encoder also writes Snap's small logical-size PNG text field, so
 standalone captures reopen at their original display size without resampling.
 Qt still reads every image and writes images with profiles/other text/offset metadata,
 high-bit-depth formats, and captures exceeding the encoder's 128 MiB filtered
@@ -37,10 +37,10 @@ is preserved on both paths. No quality or compression setting is exposed.
 
 ## Runtime: external processes, not libraries
 
-Omasnap shells out to a small number of existing command-line tools instead
+Snap shells out to a small number of existing command-line tools instead
 of linking their libraries in-process. This is intentional: a `QProcess`
 call to a well-maintained CLI tool that's already installed
-is a dependency Omasnap doesn't have to build, version, or debug — the
+is a dependency Snap doesn't have to build, version, or debug — the
 alternative (vendoring an OCR engine, a clipboard protocol implementation,
 or a compositor IPC client) would be strictly more code and more risk for
 no user-visible benefit.
@@ -62,7 +62,7 @@ detached. None run inline on the UI thread.
 ## Not a dependency: external Qt platform themes
 
 Desktop sessions commonly export `QT_QPA_PLATFORMTHEME=gtk3` so Qt apps
-match GTK apps. Omasnap overrides it to `generic` (Qt's built-in theme) for
+match GTK apps. Snap overrides it to `generic` (Qt's built-in theme) for
 its own process in `main()` before `QApplication` is constructed: honouring
 the session value loads the `qgtk3` plugin,
 which initialises GTK3, GLib/GIO and dconf inside the process — measured at
@@ -95,7 +95,7 @@ No native platform-theme plugin or new dependency is needed.
 
 ## The one config file
 
-`~/.config/omasnap/omasnap.conf` is optional INI, read with `QSettings`.
+`~/.config/snap/snap.conf` is optional INI, read with `QSettings`.
 Its existing overrides cover screenshot destination/filename patterns, preset
 colors, editor presentation, and custom backdrop defaults. It is not a
 general settings mechanism. See the "minimally configurable" principle in
@@ -132,7 +132,7 @@ adapted to the existing `QPainterPath` renderer. Its ISC notice is in
 SVG renderer, or theme lookup is needed.
 
 Single, statically-linked-where-practical binary, installed to
-`~/.local/bin/omasnap` with `xmake install`. Every
+`~/.local/bin/snap` with `xmake install`. Every
 dependency added here is weight every user carries on every install and
 every update. If a feature can be built with what's already linked, that's
 the implementation to ship.

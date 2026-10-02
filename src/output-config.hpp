@@ -44,5 +44,5 @@ struct OutputConfig {
  *  solid backdrop instead of the overlay's see-through dim. */
 [[nodiscard]] bool loadEditorWindowBackdropOpaque(const QString &filePath);
 
-/** ~/.config/omasnap/omasnap.conf (XDG config location). */
+/** ~/.config/snap/snap.conf (XDG config location). */
 [[nodiscard]] QString defaultConfigPath();

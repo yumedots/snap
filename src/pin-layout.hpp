@@ -34,7 +34,7 @@ struct PreviewPlacement {
   int y = 0;
 };
 
-/// Corner words + x/y from OMASNAP_PREVIEW_* env, else omasnap.conf
+/// Corner words + x/y from SNAP_PREVIEW_* env, else snap.conf
 /// `[preview]`, else right bottom.
 [[nodiscard]] PreviewPlacement pinPlacement();
 

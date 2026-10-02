@@ -158,7 +158,7 @@ enum class AnnotationLayer { Redaction, Default };
                                              : AnnotationLayer::Default;
 }
 
-/** Annotation text at Omasnap's logical size, in the application font. */
+/** Annotation text at Snap's logical size, in the application font. */
 [[nodiscard]] QFont annotationTextFont(qreal size);
 /**
  * Discovers the focused monitor (name, geometry, scale). Fast: only one
@@ -371,7 +371,7 @@ QImage applyRedactionsScaled(QImage image, const QVector<Annotation> &redactions
                              const QRectF &selection, const QSizeF &targetSize);
 /** Creates or repairs a private directory owned by the current user. */
 [[nodiscard]] bool ensurePrivateDirectory(const QString &path);
-/** Returns Omasnap's private runtime directory, or empty on failure. */
+/** Returns Snap's private runtime directory, or empty on failure. */
 [[nodiscard]] QString secureRuntimeDirectory();
 /**
  * Filename-safe token for a window class: lowercase, `[a-z0-9-]` only,

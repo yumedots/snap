@@ -32,15 +32,15 @@ jobs:
         run: |
           xmake f -m release -y
           xmake -y -j
-          ./build/omasnap-smoke ./build/omasnap-smoke-output
+          ./build/snap-smoke ./build/snap-smoke-output
 
       - name: Stage installation
         run: xmake install -y -o "$PWD/stage/usr"
 
       - name: Package Linux artifact
         run: |
-          version="$(QT_QPA_PLATFORM=offscreen ./build/omasnap --version | cut -d' ' -f2)"
-          archive="omasnap-${version}-archlinux-x86_64.tar.gz"
+          version="$(QT_QPA_PLATFORM=offscreen ./build/snap --version | cut -d' ' -f2)"
+          archive="snap-${version}-archlinux-x86_64.tar.gz"
           echo "CAPTURE_ARCHIVE=${archive}" >> "$GITHUB_ENV"
           echo "CAPTURE_ARTIFACT=${archive%.tar.gz}" >> "$GITHUB_ENV"
           tar -C stage -czf "$archive" .
