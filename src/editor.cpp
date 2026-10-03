@@ -874,7 +874,7 @@ CaptureEditor::CaptureEditor(CaptureData capture, CaptureMode mode,
       update(damage);
   });
 
-  ocrAnimTimer_.setInterval(16);
+  ocrAnimTimer_.setInterval(0);
   connect(&ocrAnimTimer_, &QTimer::timeout, this, [this] { update(); });
   ocrResultTimer_.setSingleShot(true);
   ocrResultTimer_.setInterval(6000);
@@ -1057,7 +1057,7 @@ CaptureEditor::CaptureEditor(CaptureData capture, CaptureMode mode,
     update();
   });
 
-  recentsAnimTimer_.setInterval(16);
+  recentsAnimTimer_.setInterval(0);
   connect(&recentsAnimTimer_, &QTimer::timeout, this, [this] {
     const qreal t = std::min(
         1.0, recentsAnimClock_.elapsed() / static_cast<qreal>(kRecentsFanMs));
