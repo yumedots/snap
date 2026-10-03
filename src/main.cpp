@@ -23,6 +23,7 @@
 #include <QJsonObject>
 #include <QProcess>
 #include <QTimer>
+#include <QThreadPool>
 #include <QApplication>
 
 #include <algorithm>
@@ -126,6 +127,7 @@ QByteArray hyprctlOutput(const QStringList &arguments) {
 } // namespace
 
 int main(int argc, char **argv) {
+  QThreadPool::globalInstance()->setMaxThreadCount(6);
   if (!qgetenv("__GLX_VENDOR_LIBRARY_NAME").isEmpty()) {
     qunsetenv("__GLX_VENDOR_LIBRARY_NAME");
     execv("/proc/self/exe", argv);
