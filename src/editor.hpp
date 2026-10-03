@@ -666,7 +666,6 @@ private:
   void handleToolbar(const QString &action);
   void paintEdit(QPainter &painter);
   void paintSelect(QPainter &painter);
-  void refreshBackdropCache();
   void refreshComposedCapture();
   void runOcr(const QRectF &localSelection = {});
   void dismissOcrOverlay();
@@ -886,11 +885,6 @@ private:
   QSize redactionBaseSize_;
   bool redactionBaseStale_ = true;
   // Select-phase capture scaled and dimmed once per source, size, DPR, and theme.
-  QPixmap dimmedBackdrop_;
-  QColor backdropScrim_;
-  QSize backdropSize_;
-  qreal backdropRatio_ = 0.0;
-  qint64 backdropKey_ = 0;
   // Background/gui-thread snapshot persistence with latest-wins coalescing.
   QFutureWatcher<bool> snapshotWatcher_;
   bool snapshotBusy_ = false;

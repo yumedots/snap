@@ -6611,50 +6611,8 @@ void CaptureEditor::updatePointerCursor() {
 void CaptureEditor::refreshComposedCapture() {
   capture_.source = composeCuts(pristineSource_, cuts_);
   capture_.previewSize = composedLogicalSize(pristineLogicalSize_, cuts_);
-  backdropKey_ = 0;           // force backdrop pixmap rebuild
   redactionBaseStale_ = true; // force redaction layer rebuild
   update();
-}
-
-void CaptureEditor::refreshBackdropCache() {
-  const qreal ratio = devicePixelRatioF();
-  const QSize deviceSize = (QSizeF(size()) * ratio).toSize();
-  const qint64 sourceKey = capture_.source.cacheKey();
-  const QColor scrim = chromeAlpha(chromeTheme().scrim, kBackdropDim);
-  if (deviceSize.isEmpty()) {
-    dimmedBackdrop_ = {};
-    backdropSize_ = {};
-    return;
-  }
-  if (!dimmedBackdrop_.isNull() && backdropSize_ == deviceSize &&
-      backdropKey_ == sourceKey && backdropScrim_ == scrim &&
-      qFuzzyCompare(backdropRatio_, ratio))
-    return;
-
-  StartupTimingScope timing("rebuild dimmed backdrop cache");
-  backdropSize_ = deviceSize;
-  backdropRatio_ = ratio;
-  backdropKey_ = sourceKey;
-  backdropScrim_ = scrim;
-  dimmedBackdrop_ = QPixmap(deviceSize);
-  dimmedBackdrop_.setDevicePixelRatio(ratio);
-  {
-    QPainter cache(&dimmedBackdrop_);
-    cache.setRenderHint(QPainter::SmoothPixmapTransform,
-                        deviceSize != capture_.source.size());
-    cache.setCompositionMode(QPainter::CompositionMode_Source);
-    {
-      StartupTimingScope drawTiming("draw source into backdrop cache");
-      cache.drawImage(QRectF(QPointF(), QSizeF(deviceSize) / ratio),
-                      capture_.source);
-    }
-    cache.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    {
-      StartupTimingScope dimTiming("dim backdrop cache");
-      cache.fillRect(QRectF(QPointF(), QSizeF(deviceSize) / ratio),
-                     scrim);
-    }
-  }
 }
 
 bool CaptureEditor::hasLiveScreen() const {
@@ -6787,7 +6745,6 @@ void CaptureEditor::adoptImage(QImage image, OperationLog log, CaptureMode kind,
   nextAnnotationId_ = std::max<quint64>(log.nextId, 1);
   nextMarker_ = std::max(log.nextMarker, 1);
   redactionBaseStale_ = true;
-  backdropKey_ = 0;
   scrollMode_ = false;
   smartMode_ = false;
   windowMode_ = false;
@@ -7179,10 +7136,14 @@ void CaptureEditor::paintSelect(QPainter &painter) {
     drawStatusPill(painter, rect(), status_);
     return;
   }
-  refreshBackdropCache();
   {
-    StartupTimingScope timing("blit cached backdrop to overlay");
-    painter.drawPixmap(rect(), dimmedBackdrop_);
+    StartupTimingScope timing("paint backdrop from source");
+    painter.save();
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    painter.drawImage(QRectF(QPointF(), QSizeF(size())), capture_.source);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    painter.fillRect(rect(), chromeAlpha(chromeTheme().scrim, kBackdropDim));
+    painter.restore();
   }
   const bool exporting = phase_ == Phase::Export;
 
