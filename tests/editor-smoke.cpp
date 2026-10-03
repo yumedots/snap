@@ -3264,6 +3264,19 @@ bool runScreenshotFilenameChecks(QString &error) {
       error = QStringLiteral("loadOutputConfig changed defaults for a missing file");
       return false;
     }
+    if (frameIntervalMs(directory.filePath(QStringLiteral("missing.conf"))) != 0) {
+      error = QStringLiteral("frameIntervalMs default must be uncapped");
+      return false;
+    }
+    if (!configFile.open(QIODevice::WriteOnly | QIODevice::Truncate) ||
+        configFile.write("[render]\nfps = 30\n") < 0)
+      return false;
+    configFile.close();
+    const int capped = frameIntervalMs(configPath);
+    if (capped != 33) {
+      error = QStringLiteral("frameIntervalMs(fps=30) = %1, expected 33").arg(capped);
+      return false;
+    }
   }
   const QByteArray previousDir = qgetenv("SNAP_SCREENSHOT_DIR");
   qputenv("SNAP_SCREENSHOT_DIR", directory.path().toUtf8());

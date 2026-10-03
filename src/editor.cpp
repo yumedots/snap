@@ -867,14 +867,14 @@ CaptureEditor::CaptureEditor(CaptureData capture, CaptureMode mode,
   // display frame. QWidget's backing store keeps everything outside that
   // region; a 6K overlay must not repaint all 20 million pixels for a badge.
   pointerRepaintTimer_.setSingleShot(true);
-  pointerRepaintTimer_.setInterval(0);
+  pointerRepaintTimer_.setInterval(frameIntervalMs(defaultConfigPath()));
   connect(&pointerRepaintTimer_, &QTimer::timeout, this, [this] {
     const QRegion damage = std::exchange(pendingPointerDamage_, {});
     if (!damage.isEmpty())
       update(damage);
   });
 
-  ocrAnimTimer_.setInterval(0);
+  ocrAnimTimer_.setInterval(frameIntervalMs(defaultConfigPath()));
   connect(&ocrAnimTimer_, &QTimer::timeout, this, [this] { update(); });
   ocrResultTimer_.setSingleShot(true);
   ocrResultTimer_.setInterval(6000);
@@ -1057,7 +1057,7 @@ CaptureEditor::CaptureEditor(CaptureData capture, CaptureMode mode,
     update();
   });
 
-  recentsAnimTimer_.setInterval(0);
+  recentsAnimTimer_.setInterval(frameIntervalMs(defaultConfigPath()));
   connect(&recentsAnimTimer_, &QTimer::timeout, this, [this] {
     const qreal t = std::min(
         1.0, recentsAnimClock_.elapsed() / static_cast<qreal>(kRecentsFanMs));

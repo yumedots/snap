@@ -382,6 +382,11 @@ position = left bottom
 # Pixel offset from that corner (default 0).
 x = 0
 y = 0
+
+[render]
+# Frame cap in frames per second for the pointer redraws and overlay
+# animations. 0 (default) follows the display refresh rate with no cap.
+fps = 0
 ```
 
 Filename tokens:

@@ -44,5 +44,9 @@ struct OutputConfig {
  *  solid backdrop instead of the overlay's see-through dim. */
 [[nodiscard]] bool loadEditorWindowBackdropOpaque(const QString &filePath);
 
+/** [render] fps: 0 (default) runs timers at display rate with no cap; a
+ *  positive value caps them, returned as a QTimer interval in ms. */
+[[nodiscard]] int frameIntervalMs(const QString &filePath);
+
 /** ~/.config/snap/snap.conf (XDG config location). */
 [[nodiscard]] QString defaultConfigPath();

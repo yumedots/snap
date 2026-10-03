@@ -6,6 +6,8 @@
 #include <QSettings>
 #include <QStandardPaths>
 
+#include <algorithm>
+
 OutputConfig loadOutputConfig(const QString &filePath) {
   OutputConfig config;
   QSettings settings(filePath, QSettings::IniFormat);
@@ -94,6 +96,14 @@ bool loadEditorWindowBackdropOpaque(const QString &filePath) {
              .toString()
              .trimmed()
              .toLower() != QStringLiteral("translucent");
+}
+
+int frameIntervalMs(const QString &filePath) {
+  QSettings settings(filePath, QSettings::IniFormat);
+  const int fps = settings.value(QStringLiteral("render/fps"), 0).toInt();
+  if (fps <= 0)
+    return 0;
+  return std::max(1, 1000 / fps);
 }
 
 QString defaultConfigPath() {
