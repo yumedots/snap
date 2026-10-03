@@ -126,6 +126,10 @@ QByteArray hyprctlOutput(const QStringList &arguments) {
 } // namespace
 
 int main(int argc, char **argv) {
+  if (!qgetenv("__GLX_VENDOR_LIBRARY_NAME").isEmpty()) {
+    qunsetenv("__GLX_VENDOR_LIBRARY_NAME");
+    execv("/proc/self/exe", argv);
+  }
   startupTimingMark("entered main");
   QCoreApplication::setApplicationName(QStringLiteral("snap"));
   QCoreApplication::setApplicationVersion(QString::fromLatin1(SNAP_VERSION));
