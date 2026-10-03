@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImageReader>
 #include <QSaveFile>
 #include <QLockFile>
 #include <QRegularExpression>
@@ -100,7 +101,16 @@ QVector<RecentSnap> listRecentSnaps(bool loadThumbnails) {
       continue;
     }
     if (loadThumbnails) {
-      snap.thumbnail.load(snap.thumbPath);
+      QImageReader reader(snap.thumbPath);
+      const QSize natural = reader.size();
+      if (natural.isValid()) {
+        const QSize target = natural.scaled(
+            QSize(kRecentThumbDecodeEdge, kRecentThumbDecodeEdge),
+            Qt::KeepAspectRatio);
+        if (target != natural)
+          reader.setScaledSize(target);
+      }
+      snap.thumbnail = reader.read();
       if (snap.thumbnail.isNull())
         continue;
     }

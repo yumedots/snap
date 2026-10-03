@@ -29,6 +29,7 @@ struct RecentSnap {
 constexpr int kRecentSnapLimit = 5;
 /// Longest edge of a stored thumbnail, in pixels.
 constexpr int kRecentThumbEdge = 320;
+constexpr int kRecentThumbDecodeEdge = 180;
 
 /// `$SNAP_RECENT_DIR`, else `$XDG_STATE_HOME/snap/recent`. Created on
 /// demand; empty when it cannot be.

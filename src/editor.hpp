@@ -52,7 +52,7 @@ class Window;
 
 /// The edit-phase key guide entries, shared by painting and by the
 /// windowed layout that reserves room for the guide.
-[[nodiscard]] QVector<QPair<QString, QString>> editorHotkeyEntries();
+[[nodiscard]] const QVector<QPair<QString, QString>> &editorHotkeyEntries();
 
 class CaptureEditor final : public QWidget {
   Q_OBJECT
@@ -738,6 +738,7 @@ private:
   QVector<CutOp> cuts_;
   bool windowedPresentation_ = false;
   ShortcutGuide *shortcutGuide_ = nullptr;
+  int guideKey_ = -1;
   std::function<bool(const QString &, const QStringList &)> processLauncher_;
   bool windowedHandoffOnEdit_ = false;
   bool windowedBackdropOpaque_ = true;

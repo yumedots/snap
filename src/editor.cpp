@@ -7226,28 +7226,30 @@ qreal selectionBoundsRadius(const Annotation &annotation, qreal inset) {
   return 0.0;
 }
 
-QVector<QPair<QString, QString>> editorHotkeyEntries() {
-  return {{QStringLiteral("V"), QStringLiteral("Select / move layer")},
-          {QStringLiteral("A"), QStringLiteral("Arrow")},
-          {QStringLiteral("L"), QStringLiteral("Line")},
-          {QStringLiteral("F / H"), QStringLiteral("Freehand / Highlighter")},
-          {QStringLiteral("C"), QStringLiteral("Marker")},
-          {QStringLiteral("R / E"), QStringLiteral("Rectangle / Ellipse")},
-          {QStringLiteral("X"), QStringLiteral("Cut out a band")},
-          {QStringLiteral("T"), QStringLiteral("Text")},
-          {QStringLiteral("Double click"), QStringLiteral("Edit text layer")},
-          {QStringLiteral("1–8"), QStringLiteral("Color")},
-          {QStringLiteral("Wheel"), QStringLiteral("Zoom selected / tool size")},
-          {QStringLiteral("D / O"), QStringLiteral("Redact / OCR text")},
-          {QStringLiteral("B / P"), QStringLiteral("Backdrop / Pin on screen")},
-          {QStringLiteral("W"), QStringLiteral("Editor to window / overlay")},
-          {QStringLiteral("Ctrl+Z"), QStringLiteral("Undo")},
-          {QStringLiteral("Ctrl+Shift+Z"), QStringLiteral("Redo")},
-          {QStringLiteral("Enter"), QStringLiteral("Copy + save")},
-          {QStringLiteral("Ctrl+C"), QStringLiteral("Copy only")},
-          {QStringLiteral("Ctrl+S"), QStringLiteral("Save only")},
-          {QStringLiteral("Ctrl+Shift+S"), QStringLiteral("Save As…")},
-          {QStringLiteral("Esc"), QStringLiteral("Close")}};
+const QVector<QPair<QString, QString>> &editorHotkeyEntries() {
+  static const QVector<QPair<QString, QString>> entries{
+      {QStringLiteral("V"), QStringLiteral("Select / move layer")},
+      {QStringLiteral("A"), QStringLiteral("Arrow")},
+      {QStringLiteral("L"), QStringLiteral("Line")},
+      {QStringLiteral("F / H"), QStringLiteral("Freehand / Highlighter")},
+      {QStringLiteral("C"), QStringLiteral("Marker")},
+      {QStringLiteral("R / E"), QStringLiteral("Rectangle / Ellipse")},
+      {QStringLiteral("X"), QStringLiteral("Cut out a band")},
+      {QStringLiteral("T"), QStringLiteral("Text")},
+      {QStringLiteral("Double click"), QStringLiteral("Edit text layer")},
+      {QStringLiteral("1–8"), QStringLiteral("Color")},
+      {QStringLiteral("Wheel"), QStringLiteral("Zoom selected / tool size")},
+      {QStringLiteral("D / O"), QStringLiteral("Redact / OCR text")},
+      {QStringLiteral("B / P"), QStringLiteral("Backdrop / Pin on screen")},
+      {QStringLiteral("W"), QStringLiteral("Editor to window / overlay")},
+      {QStringLiteral("Ctrl+Z"), QStringLiteral("Undo")},
+      {QStringLiteral("Ctrl+Shift+Z"), QStringLiteral("Redo")},
+      {QStringLiteral("Enter"), QStringLiteral("Copy + save")},
+      {QStringLiteral("Ctrl+C"), QStringLiteral("Copy only")},
+      {QStringLiteral("Ctrl+S"), QStringLiteral("Save only")},
+      {QStringLiteral("Ctrl+Shift+S"), QStringLiteral("Save As…")},
+      {QStringLiteral("Esc"), QStringLiteral("Close")}};
+  return entries;
 }
 
 void CaptureEditor::paintEdit(QPainter &painter) {
@@ -7875,9 +7877,14 @@ void CaptureEditor::paintEdit(QPainter &painter) {
 void CaptureEditor::paintEvent(QPaintEvent *event) {
   const bool showGuide = !windowedPresentation_ && !scrollPanel_ &&
                          phase_ != Phase::Export;
-  if (showGuide)
+  const int guideKey = (static_cast<int>(phase_) << 8) | (regionAspect_ << 4) |
+                       (smartMode_ ? 1 : 0) | (windowMode_ ? 2 : 0) |
+                       (scrollMode_ ? 4 : 0);
+  if (showGuide && guideKey != guideKey_) {
+    guideKey_ = guideKey;
     shortcutGuide_->setEntries(phase_ == Phase::Edit ? editorHotkeyEntries()
-                                                   : captureHotkeyEntries());
+                                                     : captureHotkeyEntries());
+  }
   shortcutGuide_->setVisible(showGuide);
   const bool firstPaint = !firstPaintReported_;
   if (firstPaint)
