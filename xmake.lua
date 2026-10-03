@@ -92,3 +92,14 @@ target("stitch-replay")
     add_files("src/stitch-replay.cpp", "src/stitch.cpp")
     add_includedirs("src")
     add_frameworks("QtGui")
+
+task("app")
+    set_menu {
+        usage = "xmake app",
+        description = "build snap and copy the binary to ~/.local/bin, replacing any existing one"
+    }
+    on_run(function ()
+        os.exec("xmake build snap")
+        os.exec("install -Dm755 build/snap " .. path.join(os.getenv("HOME"), ".local/bin/snap"))
+        print("deployed to " .. path.join(os.getenv("HOME"), ".local/bin/snap"))
+    end)
