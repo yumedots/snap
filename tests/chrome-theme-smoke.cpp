@@ -20,6 +20,7 @@
 #include <QTemporaryDir>
 #include <Qt>
 #include <QtCore/qtestsupport_core.h>
+#include <QtTest/QtTest>
 #include <QtMath>
 
 #include <cmath>
@@ -165,20 +166,15 @@ bool runChromeThemeSmoke(const QString &outputRoot, QString &error) {
   QApplication::processEvents();
   const QImage exported = editor.renderCurrentOutput();
   const int history = editor.operationIndex();
-  capture.windows = {{QRect(100, 80, 250, 150), QStringLiteral("test"),
-                      QStringLiteral("Theme fixture"),
-                      QStringLiteral("fixture")}};
-  CaptureEditor selector(capture, CaptureEditor::CaptureMode::Smart);
+  CaptureEditor selector(capture);
   selector.setSuppressSnapshots(true);
   selector.resize(capture.previewSize);
   selector.show();
   QApplication::processEvents();
   // Deliver directly: several smoke windows share the offscreen display, so
   // native cursor motion can otherwise be routed to another top-level widget.
-  const QPoint hover(200, 150);
-  QMouseEvent move(QEvent::MouseMove, hover, selector.mapToGlobal(hover),
-                   Qt::NoButton, Qt::NoButton, Qt::NoModifier);
-  QApplication::sendEvent(&selector, &move);
+  QTest::mousePress(&selector, Qt::LeftButton, Qt::NoModifier, QPoint(60, 40));
+  QTest::mouseMove(&selector, QPoint(320, 220), 20);
   QApplication::processEvents();
   QKeyEvent saveAs(QEvent::KeyPress, Qt::Key_S,
                    Qt::ControlModifier | Qt::ShiftModifier);
@@ -239,12 +235,13 @@ bool runChromeThemeSmoke(const QString &outputRoot, QString &error) {
     const QImage selectionUi = selector.grab().toImage();
     const bool saved = selectionUi.save(
         outputRoot + QStringLiteral("-selection-theme-%1.png").arg(name));
-    if (!closeColor(pixelAt(selectionUi, {160, 80}), chromeTheme().accent) ||
+    if (!closeColor(pixelAt(selectionUi, {160, 40}),
+                    chromeTheme().selectionBorder.colors.value(0)) ||
         !saved) {
       error =
-          QStringLiteral("Theme %1 did not reach the window-selection outline: "
+          QStringLiteral("Theme %1 did not reach the selection outline: "
                          "pixel=%2, widget=%3x%4, measurement=%5")
-              .arg(name, pixelAt(selectionUi, {160, 80}).name())
+              .arg(name, pixelAt(selectionUi, {160, 40}).name())
               .arg(selector.width())
               .arg(selector.height())
               .arg(selector.measurementText());

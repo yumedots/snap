@@ -26,7 +26,7 @@ reading its corresponding worker:
 
 | Watcher | Worker does |
 |---|---|
-| `captureWatcher_` | Reads window/monitor pixels via `captureMonitorPixels` |
+| `captureWatcher_` | Reads monitor pixels (and the window classes the `{app}` filename token uses) via `captureMonitorPixels` |
 | `ocrWatcher_` | Renders the OCR crop and runs `tesseract` |
 | `finishWatcher_` | Renders/encodes the export, copies/saves/launches the preview, then records the recent document |
 | `snapshotWatcher_` | Writes the crash-recovery working snapshot + operation log |

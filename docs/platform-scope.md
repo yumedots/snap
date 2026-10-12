@@ -8,11 +8,14 @@ abstractions.
 
 ## What "Hyprland-only" means concretely
 
-- Monitor and window discovery goes through `hyprctl` (`hyprctl monitors
-  -j`, `hyprctl clients -j`) — see `src/capture.cpp`. There is no
-  generic-compositor fallback for this, because there is no generic,
-  reliable way to ask an arbitrary Wayland compositor "what windows exist
-  and where."
+- Monitor discovery goes through `hyprctl` (`hyprctl monitors -j`) — see
+  `src/capture.cpp`. The focused output's pixels come from
+  `ext-image-copy-capture` in-process. There is no generic-compositor fallback
+  for the monitor probe.
+- Window *classes* are read with `hyprctl clients -j` only to build the
+  `{app}` filename token (`src/capture.cpp`). Nothing in the capture flow
+  tracks or highlights individual windows, so there is no "what window is under
+  the pointer" query to port.
 - Scroll capture's auto-scroll reads `hyprctl getoption input:natural_scroll`
   to pre-compensate injected wheel events (`src/scroll-inject.cpp`) — a
   Hyprland-specific input policy, queried the Hyprland-specific way.
@@ -38,7 +41,7 @@ reading pixels (`src/surface-capture.cpp`), `zwlr_virtual_pointer_v1` for
 injected scroll input (`src/scroll-inject.cpp`, protocol vendored in
 `protocols/`), and `layer-shell` for every overlay surface. Any wlroots
 compositor that implements the same protocols (Sway, river, and others)
-will likely run the fullscreen/region/window capture and the editor without
+will likely run the fullscreen/region capture and the editor without
 modification, because that code never asks "is this Hyprland" — it asks the
 compositor for a capability and uses it if offered.
 

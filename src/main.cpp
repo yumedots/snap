@@ -201,12 +201,10 @@ int main(int argc, char **argv) {
 
   CaptureEditor::CaptureMode captureMode = CaptureEditor::CaptureMode::Smart;
   int requestedModes = parser.isSet(QStringLiteral("capture-fullscreen")) +
-                       parser.isSet(QStringLiteral("capture-window")) + parser.isSet(QStringLiteral("capture-region")) +
+                       parser.isSet(QStringLiteral("capture-region")) +
                        parser.isSet(QStringLiteral("scroll"));
   if (parser.isSet(QStringLiteral("capture-fullscreen")))
     captureMode = CaptureEditor::CaptureMode::Fullscreen;
-  else if (parser.isSet(QStringLiteral("capture-window")))
-    captureMode = CaptureEditor::CaptureMode::Window;
   else if (parser.isSet(QStringLiteral("scroll")))
     captureMode = CaptureEditor::CaptureMode::Scroll;
   else if (parser.isSet(QStringLiteral("capture-region")))
@@ -241,9 +239,6 @@ int main(int argc, char **argv) {
       const QString mode = positional.first();
       if (mode == QStringLiteral("fullscreen"))
         captureMode = CaptureEditor::CaptureMode::Fullscreen;
-      else if (mode == QStringLiteral("windows") ||
-               mode == QStringLiteral("window"))
-        captureMode = CaptureEditor::CaptureMode::Window;
       else if (mode == QStringLiteral("smart"))
         captureMode = CaptureEditor::CaptureMode::Smart;
       else if (mode == QStringLiteral("region"))
@@ -252,7 +247,9 @@ int main(int argc, char **argv) {
         captureMode = CaptureEditor::CaptureMode::Scroll;
       else {
         qCritical().noquote()
-            << QStringLiteral("Unknown capture target: %1").arg(mode);
+            << QStringLiteral("Unknown capture target: %1 (expected smart, "
+                              "region, fullscreen, or scroll)")
+                   .arg(mode);
         return 2;
       }
     }
@@ -414,12 +411,9 @@ int main(int argc, char **argv) {
   }
 
   if (!editingImage) {
-    qInfo().noquote() << QStringLiteral(
-                             "Captured %1 workspace %2 with %3 selectable "
-                             "windows")
+    qInfo().noquote() << QStringLiteral("Captured %1 workspace %2")
                              .arg(capture.monitor.name)
-                             .arg(capture.monitor.workspaceId)
-                             .arg(capture.windows.size());
+                             .arg(capture.monitor.workspaceId);
   }
 
   const QSize editingPreview = capture.previewSize;

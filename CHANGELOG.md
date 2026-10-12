@@ -33,6 +33,17 @@ earlier development is recorded in the [commit history](https://github.com/omaco
 - Press `T` ("tack") while hovering a preview to pin or unpin it, alongside
   the pin button and `Ctrl+P`. The editor keeps `T` for Text.
 
+### Removed
+
+- Window selection: hovering a window no longer punches an undimmed hole in the
+  backdrop, no window is outlined, and a click no longer crops a window. A click
+  in the default smart picker now always takes the full focused monitor, and a
+  drag still selects a region. The `--capture-window` flag, the `snap windows`
+  and `snap window` positional targets, the `SUPER + Arrow` window cycle, and the
+  `Enter`-captures-the-window binding are gone; use `Ctrl + A` (or a click) for
+  the full monitor and a drag for an area. Window classes are still read to name
+  saved files with the `{app}` token.
+
 ### Changed
 
 - Remember the latest five completed captures even after their previews expire,

@@ -52,8 +52,8 @@ void configureCaptureCommandLine(QCommandLineParser &parser, bool beforeQt) {
       "Native Wayland screenshot and annotation overlay for Hyprland and "
       "Omarchy.\n"
       "\n"
-      "With no target, drag for a region, click a window, or click open "
-      "space for\nthe full focused monitor. Captures save, copy to the clipboard, "
+      "With no target, drag for a region, or click for the full focused\n"
+      "monitor. Captures save, copy to the clipboard, "
       "and show a\npreview for 10 seconds; use its pin button or Ctrl+P to keep "
       "it, or Edit to annotate.\n"
       "Use --editor to edit before output.\n"
@@ -73,14 +73,10 @@ void configureCaptureCommandLine(QCommandLineParser &parser, bool beforeQt) {
   const QCommandLineOption fullscreenOption(
       QStringLiteral("capture-fullscreen"),
       QStringLiteral("Start with the entire focused monitor selected."));
-  const QCommandLineOption windowOption(
-      {QStringLiteral("capture-window"), QStringLiteral("capture-windows")},
-      QStringLiteral("Start in window selection mode."));
   const QCommandLineOption regionOption(
       QStringLiteral("capture-region"),
       QStringLiteral("Start in freeform region selection mode."));
   parser.addOption(fullscreenOption);
-  parser.addOption(windowOption);
   parser.addOption(regionOption);
   const QCommandLineOption copyOption(
       QStringLiteral("copy"),
@@ -137,7 +133,7 @@ void configureCaptureCommandLine(QCommandLineParser &parser, bool beforeQt) {
   parser.addOption(scrollOption);
   parser.addPositionalArgument(
       QStringLiteral("target"),
-      QStringLiteral("Capture mode (smart, region, windows, fullscreen, scroll) or the "
+      QStringLiteral("Capture mode (smart, region, fullscreen, scroll) or the "
                      "path of an image file to edit."),
       QStringLiteral("[target]"));
 }

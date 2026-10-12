@@ -47,7 +47,7 @@ no user-visible benefit.
 
 | Process | Used for | Required? |
 |---|---|---|
-| `hyprctl` | Monitor/window discovery (`-j` JSON), floating pin placement, natural-scroll policy query | Yes — see [platform-scope.md](platform-scope.md) |
+| `hyprctl` | Monitor discovery, window classes for the `{app}` filename token (`-j` JSON), floating pin placement, natural-scroll policy query | Yes — see [platform-scope.md](platform-scope.md) |
 | `wl-copy` / `wl-paste` | Writing PNG/text to the Wayland clipboard, and verifying the write | Yes |
 | `xdg-open` | Opening a screenshot's containing folder in the default file browser | For Show in folder |
 | `xdg-mime` / `busctl` | Resolve the default folder application and ask it to select the screenshot with `FileManager1.ShowItems` | Optional — falls back to `xdg-open` |

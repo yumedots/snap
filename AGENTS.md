@@ -1,8 +1,8 @@
 # Snap — Agent Guide
 
 Snap is a super fast, native Wayland screenshot and annotation overlay,
-built for [Omarchy](https://omarchy.org) on Hyprland. It captures region,
-window, or full monitor (plus a scrolling-region mode that stitches a taller
+built for [Omarchy](https://omarchy.org) on Hyprland. It captures a region or
+the full monitor (plus a scrolling-region mode that stitches a taller
 page into one image), then copies it and opens a floating compositor preview.
 The preview fades after 10 seconds of idle time unless kept with its pin button,
 Ctrl+P, or by dragging it, including within the stack. Hovering and in-progress
@@ -45,7 +45,8 @@ change that touches the principle, not just this summary.
   a new key needs the same justification the existing ones had, not "this
   would be nice to expose."
 - **Speed first.** Instant capture, annotate, copy. No startup bloat.
-- **Wayland only, Hyprland only.** Monitor/window discovery, input
+- **Wayland only, Hyprland only.** Monitor discovery (plus the window classes
+  the `{app}` filename token needs), input
   injection quirks, and notification conventions are all Hyprland-specific
   on purpose. Code that happens to also run on another wlroots compositor,
   because it stands on a real Wayland protocol rather than a Hyprland
@@ -87,7 +88,7 @@ change that touches the principle, not just this summary.
 | `src/instance-lock.cpp/.hpp` | Single-instance handover: cancel a running overlay, or stop it and take over for `--file` |
 | `src/capture.cpp/.hpp` | Capture, render pipeline, output (clipboard/save/notify), source+JSON operation-log persistence, config loading glue |
 | `src/editor.cpp/.hpp` | Annotation editor: tools, vector layers, operation-log undo/redo, the select↔edit phase machine, export |
-| `src/overlay-chrome.cpp/.hpp` | Shared chrome every overlay wears: the capture-kind tab strip, hotkey legend, status pill |
+| `src/overlay-chrome.cpp/.hpp` | Shared chrome every overlay wears: hotkey legend, status pill |
 | `src/scroll-capture.cpp/.hpp` | The scroll-capture panel: region-live page, manual/auto mode, grips, stitched result |
 | `src/scroll-inject.cpp/.hpp` | Auto-scroll wheel injection (uinput / `zwlr_virtual_pointer_v1`) |
 | `src/auto-capture.cpp/.hpp`, `src/stitch.cpp/.hpp` | Pure, offline-testable frame classification and stitching |

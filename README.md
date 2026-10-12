@@ -15,19 +15,17 @@ preview keeps it on screen.
 
 ## Features
 
-- Smart selection by default: drag a freeform region, click a window to crop
-  it, or click open monitor space for the full monitor. Explicit region,
-  window, fullscreen, and scrolling-region modes remain available.
+- Smart selection by default: drag a freeform region, or click for the full
+  focused monitor. Explicit region, fullscreen, and scrolling-region modes
+  remain available.
 - Fresh captures save, copy to the clipboard, and show a floating preview for 10 seconds
   without taking keyboard focus. Hover for Pin, Edit, Copy, file drag, and Close
   controls. Use the pin button, `Ctrl+P`, `T` while hovered, or drag the preview to
   keep it on screen.
 - A pointer-side readout that turns any drag into a ruler: the pointer position
-  while the crosshair is idle, then the frame size in native export pixels while a
-  region, a hovered window, or a crop handle is being sized. Crosshair guides
-  appear without requiring an initial mouse movement.
-- Window capture is a crop of the focused-monitor frame. Overlapping windows stay
-  visible; there is no second clean-window recapture.
+  while the crosshair is idle, then the frame size in native export pixels while
+  a region or a crop handle is being sized. Crosshair guides appear without
+  requiring an initial mouse movement.
 - Select/move/resize layers, mouse-wheel scaling, and eight external recropping handles.
 - Start arrows, shapes, strokes, markers, spotlights, or text in the unused
   fullscreen workspace around a screenshot, or resize and carry an existing
@@ -91,12 +89,13 @@ preview keeps it on screen.
 
 The supported target is **Wayland + Hyprland**, with Omarchy as the primary integration.
 The renderer, layer surface, clipboard, and monitor capture use Wayland protocols;
-monitor/window discovery currently calls `hyprctl`. The focused output is captured
+monitor discovery and the window-class lookup for filenames currently call `hyprctl`.
+The focused output is captured
 in-process through `ext-image-copy-capture` before the layer maps. Selection displays
 that captured frame, while the annotation editor uses
 a translucent layer scrim over the live desktop and draws only the selected capture.
 Another Wayland compositor could support the application after supplying equivalent
-monitor and window discovery; generic Wayland support is not claimed by 1.0.
+monitor and window-class discovery; generic Wayland support is not claimed by 1.0.
 
 Runtime commands used by the application:
 
@@ -186,8 +185,7 @@ extensions; they do not install native executables or system packages.
 ## CLI capture modes
 
 Running without arguments opens smart selection. Drag for a freeform region,
-click a window to capture it, or click outside every window to capture the
-focused monitor:
+or click for the full focused monitor:
 
 ```bash
 snap
@@ -197,7 +195,6 @@ Explicit starting modes:
 
 ```bash
 snap --capture-region
-snap --capture-window
 snap --capture-fullscreen
 ```
 
@@ -218,7 +215,6 @@ Positional capture modes are also accepted:
 
 ```bash
 snap region
-snap windows
 snap fullscreen
 snap smart
 ```
@@ -239,8 +235,8 @@ showing a preview. Set `[output] autosave = false` to opt out. Preview expiry le
 Copy or Save action.
 
 Quick output skips the preview as well as the annotation editor. Add `--copy` to copy
-only, `--save` to save only, or both flags to copy and save. Region and window captures output after selection;
-fullscreen captures output immediately. Quick output cannot be combined with `--file`,
+only, `--save` to save only, or both flags to copy and save. Region captures output after
+selection; fullscreen captures output immediately. Quick output cannot be combined with `--file`,
 `--clipboard`, or `--pin`.
 
 ### One instance, toggled by the same hotkey
@@ -428,13 +424,13 @@ annotation. The windowed editor keeps its guide above the toolbar.
 ### Capture selection
 
 The default smart picker infers the capture kind from the gesture: drag for a
-region, click a window for that window, or click open space for the full
-focused monitor. Whatever is lit is what will be captured.
+region, or click for the full focused monitor. Whatever is lit is what will be
+captured.
 
 Press `S` before drawing to select a scrolling region; once drawn, the page
 inside it goes live and the scroll controls appear in place. A small **Scroll
 capture** button under an image already open in the editor turns that region
-into a scrolling capture. Explicit `region`, `windows`, `fullscreen`, and
+into a scrolling capture. Explicit `region`, `fullscreen`, and
 `scroll` command-line targets remain available for scripts and keybindings.
 While scrolling, use the on-screen Done and Cancel buttons, or `Enter` and
 `Esc` when the overlay has keyboard focus. Move the pointer back over the
@@ -442,14 +438,13 @@ controls to return focus from the live page.
 
 | Input | Action |
 |---|---|
-| Click | In smart mode, capture the window under the pointer, or the full monitor outside any window |
+| Click | In smart mode, capture the full focused monitor |
 | Drag | Select a region, with its native pixel size shown at the pointer |
 | `Tab` / `Shift+Tab` | Cycle the region's shape: free (default), square, 3:4, 16:9; works mid-drag |
 | `S` | Toggle scrolling-region mode |
 | `E` / `A` | Toggle annotation after capture; the capture guide shows on/off, and the choice also applies to scrolling captures |
 | `R` | Restore the last drawn region, including from a previous Snap launch in this login session (same monitor and overlay size) |
-| `SUPER + Arrow` | Move among windows in window mode |
-| `Enter` | Capture the highlighted window |
+| `Enter` | Capture the full focused monitor in smart mode |
 | `Ctrl+A` | Select the full focused monitor |
 | Hover the right-edge stack | Fan out the five most recent captures; click one to reopen it |
 | `Esc` | Dismiss; cancel a selection drag if one is in progress |
@@ -626,7 +621,7 @@ xmake -y
 QT_QPA_PLATFORM=offscreen ./build/snap-smoke ./build/snap-smoke-output
 ```
 
-The smoke executable exercises smart/region/window/fullscreen startup modes, capture selection,
+The smoke executable exercises smart/region/fullscreen startup modes, capture selection,
 working-document persistence (source plus op-log JSON), annotation tools, undo/redo
 replay, vector movement and scaling, text editing, OCR, native-DPI output,
 endpoint-only line selection, annotation-driven canvas growth and clipping policies,
