@@ -24,6 +24,8 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileDialog>
+#include <QListView>
+#include <QItemSelectionModel>
 #include <QPlainTextEdit>
 #include <QLineEdit>
 #include <QTemporaryDir>
@@ -206,6 +208,15 @@ bool runSaveAsSmoke(QString &error) {
     }
     filename->selectAll();
     QTest::keyClicks(filename, windowed ? output.chopped(4) : output);
+    // Offscreen never activates the chooser, so the line edit lacks focus and
+    // QFileDialog keeps every intermediate directory of the typed path
+    // selected; accept() would see "/" first and navigate instead of saving.
+    // Focus would have pruned them; do it here.
+    if (auto *listView =
+            dialog->findChild<QListView *>(QStringLiteral("listView"))) {
+      if (listView->selectionModel())
+        listView->selectionModel()->clearSelection();
+    }
     QMetaObject::invokeMethod(dialog, "accept", Qt::DirectConnection);
     if (!waitUntil([&] { return !editor.busy_; }) || editor.isVisible() ||
         editor.textEditing() || QImage(output).convertToFormat(QImage::Format_ARGB32) !=
